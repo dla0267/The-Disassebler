@@ -1,36 +1,39 @@
-*-----------------------------------------------------------
-* Title      :
-* Written by :
-* Date       :
-* Description:
-*-----------------------------------------------------------
+*------------------------------------------------------------------
+* Title      :  Team A Disassembler- CSS 422
+* Written by :  Orpal Nagra, Kris (Giwhan) Kwon, Yuunbum Lim
+* Date       :  12/8/2018
+* Description:  Please see attached docs for detailed description 
+*------------------------------------------------------------------
 
-STACK  EQU $7000    ; 
-range_start EQU $7000   ;
-range_end   EQU $9FFF   ;       
-list_hex_size   EQU     16  ; 
+STACK  EQU $7000                    ; 
+range_start EQU $7000               ;
+range_end   EQU $9FFF               ;       
+list_hex_size   EQU     16          ; 
 clear           EQU     $00000000   ;
-display_size    EQU 20                                      ;    
-init    EQU 0   ; 
-increment   EQU 1   ;
-long EQU    8   ;  
-word    EQU 4   ; 
-byte    EQU 2   ; 
+display_size    EQU 20              ;    
+init    EQU 0                       ; 
+increment   EQU 1                   ;
+long EQU    8                       ;  
+word    EQU 4                       ; 
+byte    EQU 2                       ; 
 
-* Special characters    ; 
-CR  EQU $0D ; 
-LF  EQU $0A ; 
-NULL    EQU $00 ; 
-TAB EQU $09 ; 
-DOLLAR EQU  $24 ; #36 in dec 
-COMMA   EQU $2C ; 
-PERIOD  EQU $2E  ; 
-PLUS    EQU $2B  ; 
-MINUS   EQU  $2D    ; 
-Open_paren  EQU $28 ; 
-Close_paren EQU $29 ; 
-SPACE   EQU $20 ;     
-SHARP   EQU $23 ;    
+* Special characters                ; 
+CR  EQU $0D                         ; 
+LF  EQU $0A                         ; 
+NULL    EQU $00                     ; 
+TAB EQU $09                         ; 
+DOLLAR EQU  $24                     ; #36 in dec 
+COMMA   EQU $2C                     ; 
+PERIOD  EQU $2E                     ; 
+PLUS    EQU $2B                     ; 
+MINUS   EQU  $2D                    ; 
+Open_paren  EQU $28                 ; 
+Close_paren EQU $29                 ;
+SPACE   EQU $20                     ;     
+SHARP   EQU $23                     ;    
+SLASH   EQU $2F                     ; 
+DASH    EQU $2D                     ;
+COLON   EQU $3A                     ;
 
 * Alphabet  
 A_  EQU $41 ; 
@@ -72,8 +75,8 @@ SEVEN_  EQU $37 ;
 EIGHT_  EQU $38 ;   
 NINE_   EQU $39 ;   
 
-    ORG    $1000
-START:                  ; first instruction of program
+    ORG $1000   
+START:                                      ; first instruction of program
 * Put program code here
 
 * get starting address
@@ -256,6 +259,9 @@ decode_start
     *   if RTS      
     CMPI.W  #$4E75, D5  ;
     BEQ RTS_function    ;    
+    
+    CMPI.W  #$4E71, D5  ;   check if nop function
+    BEQ NOP_function    ;  
 
     BSR get_firstFourBits   ; return first four bits in D0
     BSR get_secondFourBits  ; return second four bits in D1 
@@ -434,8 +440,8 @@ decode_end
     
     
     * add CR, LF at the end of line 
-    MOVE.B  #CR, (A5)+  ; 
-    MOVE.B  #LF, (A5)+  ;
+    MOVE.B  #CR, (A5)+      ; 
+    MOVE.B  #LF, (A5)+      ;
     
     MOVEM.L (A7)+, D3-D4/A3 ; move parameters back from stack  
     ADDI.B  #increment, D3  ; increment D3 by 1 
@@ -446,53 +452,53 @@ decode_end
 * hex in A6, size in D1 convert to string and put it in the A5,    
 * Long 4byte, Word = 2byte, Byte = 1byte, therefore D1 = 4, 2, or 1; 
 hex_to_string   ; since address is in word size 
-    LEA LIST_HEX, A0    ; load list hex into A0 
-    MOVE.L  A6, D2  ; move A6(address value) into D2   
-    MOVE.B  #init, D0  ; initilize count 0 in D0   
+    LEA LIST_HEX, A0        ; load list hex into A0 
+    MOVE.L  A6, D2          ; move A6(address value) into D2   
+    MOVE.B  #init, D0       ; initilize count 0 in D0   
         
-    CMPI.B  #long, D1  ; if size is long 
-    BEQ initLong    ; 
+    CMPI.B  #long, D1       ; if size is long 
+    BEQ initLong            ; 
     
-    CMPI.B  #word, D1  ; if size is word   
-    BEQ initWord    ; 
+    CMPI.B  #word, D1       ; if size is word   
+    BEQ initWord            ; 
     
-    CMPI.B  #byte, D1  ; if size is byte   
-    BEQ initByte    ; 
+    CMPI.B  #byte, D1       ; if size is byte   
+    BEQ initByte            ; 
     
 initLong
-    MOVE.L  #$F0000000, D3    ;
-    BRA htsLoop ;  
+    MOVE.L  #$F0000000, D3  ;
+    BRA htsLoop             ;  
 
 initWord
     MOVE.L  #$0000F000, D3  ; 
-    BRA htsLoop ; 
+    BRA htsLoop             ; 
 
 initByte    
-    MOVE.L  #$000000F0, D3    ; 
-    BRA htsLoop ; 
+    MOVE.L  #$000000F0, D3  ; 
+    BRA htsLoop             ; 
     
 htsLoop 
-    CMP.B   D0, D1  ; 
-    BEQ htsDone ;
+    CMP.B   D0, D1          ; 
+    BEQ htsDone             ;
     
     * A0 has list_hex, D2 has address val, D3 has mask (D0, D1 reserved) 
     MOVE.L  D2, D4  ; copy addr value into D4   
     AND.L   D3, D4  ; masking and store in D4   
     
     * shift amount(D5) = (size(D1) * 2) - 1 - current(D0)
-    MOVE.L  D1, D5  ; 
-    SUBI.L  #1, D5  ;   ((size) - 1 -> D5); 
-    SUB.L  D0, D5  ;   ((size) - 1 - current ->D5)
-    MOVE.L  #4, D6  ; 
-    MULU.W  D6, D5  ;  ((size) - 1 - current ->D5) * 4
+    MOVE.L  D1, D5      ; 
+    SUBI.L  #1, D5      ;   ((size) - 1 -> D5); 
+    SUB.L  D0, D5       ;   ((size) - 1 - current ->D5)
+    MOVE.L  #4, D6      ; 
+    MULU.W  D6, D5      ;  ((size) - 1 - current ->D5) * 4
     
-    LSR.L   D5, D4  ; shift masked value right by shift amount
-    LSR.L   D6, D3  ; shift mask to the right   
+    LSR.L   D5, D4      ; shift masked value right by shift amount
+    LSR.L   D6, D3      ; shift mask to the right   
     
     * now D4 contains 4bits, find character in the hex list and add into result message 
-    MOVEA.L A0, A3            ; copy hex list starting address to A3     
-    ADD.L   D4, A3              ; index of character    
-    MOVE.B  (A3), (A5)+     ; move the character into result message    
+    MOVEA.L A0, A3      ; copy hex list starting address to A3     
+    ADD.L   D4, A3      ; index of character    
+    MOVE.B  (A3), (A5)+ ; move the character into result message    
     
     ADDI.B  #increment, D0  ; 
     BRA htsLoop ;  
@@ -503,19 +509,19 @@ htsDone
     
 
 * logical shift because sign is not necessary 
-get_firstFourBits   ; from word input in D5,    return in D0    
-    MOVE.W  D5, D0  ;
-    MOVE.B  #12, D1 ;  
-    LSR.W   D1, D0 ; 
+get_firstFourBits       ; from word input in D5,    return in D0    
+    MOVE.W  D5, D0      ;
+    MOVE.B  #12, D1     ;  
+    LSR.W   D1, D0      ; 
     RTS 
     
 *  logical shift because sign is not necessary 
-get_secondFourBits  ; from word input in D5, return in D1 
-    MOVE.W  D5, D1  ;
-    MOVE.B  #4, D2  ; 
-    LSL.W   D2, D1  ;
-    MOVE.B  #12, D2 ;  
-    LSR.W   D2, D1 ;  
+get_secondFourBits      ; from word input in D5, return in D1 
+    MOVE.W  D5, D1      ;
+    MOVE.B  #4, D2      ; 
+    LSL.W   D2, D1      ;
+    MOVE.B  #12, D2     ;  
+    LSR.W   D2, D1  ;  
     RTS 
 
 
@@ -529,9 +535,9 @@ finish_page
 * print a page that contains "human readable" code    
 print_page  
     MOVE.B  #NULL, (A5)+ 
-    MOVEA.L A4, A1  ; 
-    MOVE.B  #13, D0 ; 
-    TRAP    #15 ; 
+    MOVEA.L A4, A1          ; 
+    MOVE.B  #13, D0         ; 
+    TRAP    #15             ; 
     RTS 
         
         
@@ -612,6 +618,11 @@ RTS_function
     BSR copy_string       ;   
     BRA decode_end  
 
+NOP_function
+    LEA NOP_, A6        ; move memory address for NOP characters    
+    MOVE.B  #3, D6      ; NOP is 3 characters, size of string into D6   
+    BSR copy_string     ;   
+    BRA decode_end  
  
 * zero_start********************
 ORI_function
@@ -625,71 +636,60 @@ ORI_function
     MOVE.B  #PERIOD, (A5)+    
     
     * check size  00 - byte, 01 - word, 10 - long     
-    MOVE.W  D5, D0  ;   copy opcode into D0 only byte size because starts with $00    
-    MOVE.W  #$00C0, D6    ;   bit mask in D6  
-    MOVE.B  #6, D7      ;   shift value after masking   
-    BSR get_bit         ;   return size in D0   
+    MOVE.W  D5, D0          ;   copy opcode into D0 only byte size because starts with $00    
+    MOVE.W  #$00C0, D6      ;   bit mask in D6  
+    MOVE.B  #6, D7          ;   shift value after masking   
+    BSR get_bit             ;   return size in D0   
     
-    CMPI.B  #$00, D0    ;   if size == 0
-        BEQ add_B     ;         
-    CMPI.B  #$01, D0    ;   if size == 1 
+    CMPI.B  #$00, D0        ;   if size == 0
+        BEQ add_B           ;         
+    CMPI.B  #$01, D0        ;   if size == 1 
         BEQ add_W      
-    CMPI.B  #$02, D0    ;   if size == 2    
-        BEQ add_L   ; 
+    CMPI.B  #$02, D0        ;   if size == 2    
+        BEQ add_L           ; 
     
-    MOVEM.L (A7)+, A5   ;   
-    BRA invalid_code    ;  
+    MOVEM.L (A7)+, A5       ;   
+    BRA invalid_code        ;  
 
 add_B
-    MOVE.B  #B_, (A5)+   
-    MOVE.B  #TAB, (A5)+  ;
+    MOVE.B  #B_, (A5)+      ;
+    MOVE.B  #TAB, (A5)+     ;
     MOVE.B  #SHARP, (A5)+   ; 
     MOVE.B  #DOLLAR, (A5)+  ;    
-    MOVE.W  (A2)+, A6   ;   A6 now contains word size next opcode   
-    
-    * check if first 8 bits are 0s  
-    MOVE.L  A6, D1      ;   
-    LSR.W   #8, D1      ;   shift right 8   
-    CMPI.B  #$00, D1    ;   if $00 is starting bits 
-    BEQ valid           ;   true, then go to valid  
-    MOVEM.L (A7)+, A5   ;   Restore A5  from the stack  
-    BRA invalid_code    ;   otherwise, go to invalid code   
+    MOVE.W  (A2)+, A6       ;   A6 now contains word size next opcode   
+      
 valid   
-    MOVE.B  #byte, D1   ; 
-    MOVEM.L D5/A0, -(A7)  
-    BSR hex_to_string   ;   
-    MOVEM.L (A7)+, D5/A0  ; 
+    MOVE.B  #byte, D1       ; 
+    MOVEM.L D5/A0, -(A7)    ;   
+    BSR hex_to_string       ;   
+    MOVEM.L (A7)+, D5/A0    ; 
     
-    BRA check_mode      ;     
+    BRA check_mode          ;     
 add_W   
-    MOVE.B  #W_, (A5)+   
-    MOVE.B  #TAB, (A5)+  ;
+    MOVE.B  #W_, (A5)+      ;
+    MOVE.B  #TAB, (A5)+     ;
     MOVE.B  #SHARP, (A5)+   ;   
     MOVE.B  #DOLLAR, (A5)+  ;   
-    MOVE.W  (A2)+, A6   ;   read next opcode    
-    MOVE.B  #word, D1   ;   
-    MOVEM.L D5/A0, -(A7)  
-    BSR hex_to_string   ;   
-    MOVEM.L (A7)+, D5/A0  ;
+    MOVE.W  (A2)+, A6       ;   read next opcode word size    
+    MOVE.B  #word, D1       ;   
+    MOVEM.L D5/A0, -(A7)    ; 
+    BSR hex_to_string       ;   
+    MOVEM.L (A7)+, D5/A0    ;
     
-    BRA check_mode      ;   
+    BRA check_mode          ;   
 add_L     
-    MOVE.B  #L_, (A5)+   ;   
-    MOVE.B  #TAB, (A5)+  ;
+    MOVE.B  #L_, (A5)+      ;   
+    MOVE.B  #TAB, (A5)+     ;
     MOVE.B  #SHARP, (A5)+   ;  
     MOVE.B  #DOLLAR, (A5)+  ;   
-    MOVE.L  (A2)+, A6   ;   
-    MOVE.B  #long, D1   ;   
+    MOVE.L  (A2)+, A6       ;   
+    MOVE.B  #long, D1       ;   
     MOVEM.L D5/A0, -(A7)  
-    BSR hex_to_string   ;   
-    MOVEM.L (A7)+, D5/A0  ;
+    BSR hex_to_string       ;   
+    MOVEM.L (A7)+, D5/A0    ;
     
-    BRA check_mode      ;   
+    BRA check_mode          ;   
     
-    
-check_register              
-    * check register number of register 000 is 8, but when mode is 111, 000 is w and 001 is Long
-
 
 check_mode  
     MOVE.B  #COMMA, (A5)+   ;   
@@ -708,87 +708,87 @@ check_mode
     
     * now D1 has mode bits, D0 has register bits    
     
-    CMPI.W  #$00, D1    ;  000   
-    BEQ ori_Data_reg        ;   
+    CMPI.W  #$00, D1            ;   if mode == 000   
+    BEQ ori_Data_reg            ;   
     
-    CMPI.W  #$02, D1    ;   010 
-    BEQ ori_Addr_paren       ;      
+    CMPI.W  #$02, D1            ;   if mode == 010 
+    BEQ ori_Addr_paren          ;      
     
-    CMPI.W  #$03, D1    ;   011 
-    BEQ ori_Addr_paren_plus  ;   
+    CMPI.W  #$03, D1            ;   if mode == 011 
+    BEQ ori_Addr_paren_plus     ;   
     
-    CMPI.W  #$04, D1    ;   100 
+    CMPI.W  #$04, D1            ;   if mode == 100 
     BEQ ori_Addr_paren_minus    ;
 
-    CMPI.w  #$07, D1    ;   111 
-    BEQ ori_ea          ;      
+    CMPI.w  #$07, D1            ;   if mode == 111 
+    BEQ ori_ea                  ;      
     
-    MOVEM.L (A7)+, A5   ;   Restore A5  from the stack  
-    BRA invalid_code    ;   otherwise, invalid code 
+    MOVEM.L (A7)+, A5           ;   Restore A5  from the stack  
+    BRA invalid_code            ;   otherwise, invalid code 
     
 ori_Data_reg
-    MOVE.B  #D_, (A5)+  ; 
-    BSR put_number  ;      
+    MOVE.B  #D_, (A5)+          ; put Dn with number    
+    BSR put_number              ;      
 
-    BRA ori_done    ;   
+    BRA ori_done                ;   
 
 ori_Addr_paren
-    MOVE.B  #Open_paren, (A5)+  ;   
+    MOVE.B  #Open_paren, (A5)+  ; put (An) with number  
     MOVE.B  #A_, (A5)+          ;
-    BSR put_number  ;      
+    BSR put_number              ;      
   
-    MOVE.B  #Close_paren, (A5)+ ;   
-    BRA ori_done    ;   
+    MOVE.B  #Close_paren, (A5)+ ;
+    BRA ori_done                ;   
 
 ori_Addr_paren_plus
-    MOVE.B  #Open_paren, (A5)+  ;   
+    MOVE.B  #Open_paren, (A5)+  ; put (An)+ with number        
     MOVE.B  #A_, (A5)+          ;
-    BSR put_number  ;   
+    BSR put_number              ;   
     MOVE.B  #Close_paren, (A5)+ ;   
-    MOVE.B  #PLUS, (A5)+    ;
+    MOVE.B  #PLUS, (A5)+        ;
 
-    BRA ori_done    ;      
+    BRA ori_done                ;      
 ori_Addr_paren_minus
-    MOVE.B  #MINUS, (A5)+           ;   
+    MOVE.B  #MINUS, (A5)+       ; put -(An) with number    
     MOVE.B  #Open_paren, (A5)+  ;   
     MOVE.B  #A_, (A5)+          ;
-    BSR put_number  ;      
+    BSR put_number              ;      
     MOVE.B  #Close_paren, (A5)+ ;   
     
-    BRA ori_done    ;   
+    BRA ori_done                ;   
 ori_ea  
-    MOVE.B  #DOLLAR, (A5)+  ;   
-    CMPI.W  #$00, D0    ;
-    BEQ word_ea         ;   
+    MOVE.B  #DOLLAR, (A5)+      ;   
+    CMPI.W  #$00, D0            ; if register == 00 
+    BEQ word_ea                 ;   
     
-    CMPI.W  #$01, D0    ;   
-    BEQ long_ea         ;  
+    CMPI.W  #$01, D0            ; if register == 01   
+    BEQ long_ea                 ;  
 
-    MOVEM.L (A7)+, A5   ;   
-    BRA invalid_code    ;    
+    MOVEM.L (A7)+, A5           ;   
+    BRA invalid_code            ;    
     
-word_ea                                     ;       
-    MOVEA.W (A2)+, A6      ;   
-    MOVE.W  #word, D1   ;   
-    MOVEM.L A0, -(A7)  
-    BSR hex_to_string   ;   
-    MOVEM.L (A7)+, A0  ;
-    BRA ori_done        ;   
+word_ea                         ;       
+    MOVEA.W (A2)+, A6           ; read word size more opcode       
+    MOVE.W  #word, D1           ;   
+    MOVEM.L D5/A0, -(A7)        ;
+    BSR hex_to_string           ;       
+    MOVEM.L (A7)+, D5/A0        ;
+    BRA ori_done                ;   
 
-long_ea                                     ;   
-    MOVEA.L (A2)+, A6      ;   
-    MOVE.W  #long, D1   ;   
-    MOVEM.L A0, -(A7)  
-    BSR hex_to_string   ;   
-    MOVEM.L (A7)+, A0  ;
-    BRA ori_done    ;   
+long_ea                         ;   
+    MOVEA.L (A2)+, A6           ; 
+    MOVE.W  #long, D1           ; read long size more opcode      
+    MOVEM.L D5/A0, -(A7)        ;
+    BSR hex_to_string           ;   
+    MOVEM.L (A7)+, D5/A0        ;
+    BRA ori_done                ;   
 
 ori_done    
     * copy into the result message  ;  
     * get size of the message    
-    MOVEA.L A0, A6  ;    move starting address back to A6   
-    * count till A0 == A5   ;
-    CLR D6   ;    D6 == 0    
+    MOVEA.L A0, A6              ; move starting address back to A6   
+    * count till A0 == A5       ;
+    CLR D6                      ; D6 == 0    
 ori_loop    
     CMPA.L  A0, A5  ;   
     BEQ ori_message_out 
@@ -951,7 +951,7 @@ bclr_dn_valid                   ;
 
     BRA check_mode     ;      
 ***********************************************************************
-* one_start ********************
+* one_start **********************************************************************************  
 MOVE_B   
     MOVEM.L A5, -(A7)   ;   save A5 in the stack (pointer to result message)  
     MOVEA.L A6, A0      ;   starting address of temp      
@@ -979,110 +979,110 @@ move_b_src
     BSR get_bit         ;   
     
     * now D1 has source mode, D0 has source register number 
-    CMPI.W  #$0000, D1  ;   
-    BEQ move_b_Data_reg ;   
+    CMPI.W  #$0000, D1          ; if mode == 0  
+    BEQ move_b_Data_reg         ;   
 
-    CMPI.W  #$0001, D1  ;   
-    BEQ move_b_Addr_reg ;   
+    CMPI.W  #$0001, D1          ; if mode == 1  
+    BEQ move_b_Addr_reg         ;   
 
-    CMPI.W  #$0002, D1  ;   
+    CMPI.W  #$0002, D1          ; if mode == 2     
     BEQ move_b_Addr_reg_paren ;   
 
-    CMPI.W  #$0003, D1  ;   
+    CMPI.W  #$0003, D1          ; if mode == 3    
     BEQ move_b_Addr_reg_plus    ;   
 
-    CMPI.W  #$0004, D1  ;   
+    CMPI.W  #$0004, D1          ; if mode == 4  
     BEQ move_b_Addr_reg_minus   ;   
 
-    CMPI.W  #$0007, D1  ;   
-    BEQ move_b_ea_im    ;   
+    CMPI.W  #$0007, D1          ; if mode == 7  
+    BEQ move_b_ea_im            ;   
     
-    MOVEM.L (A7)+, A5   ;   
-    BRA invalid_code    
+    MOVEM.L (A7)+, A5           ;   
+    BRA invalid_code            ; otherwise return invalid message  
 
 move_b_Data_reg 
-    MOVE.B  #D_, (A5)+  ;
-    BSR put_number  ;   
+    MOVE.B  #D_, (A5)+          ; put Dn with number    
+    BSR put_number              ;   
     
-    BRA move_b_dest  ;   
+    BRA move_b_dest             ;   
 
 move_b_Addr_reg 
-    MOVE.B  #A_, (A5)+  ;
-    BSR put_number  ;   
+    MOVE.B  #A_, (A5)+          ; put An with number    
+    BSR put_number              ;   
     
-    BRA move_b_dest ;
+    BRA move_b_dest             ;
 
 move_b_Addr_reg_paren   
-    MOVE.B  #Open_paren, (A5)+  ;     
-    MOVE.B  #A_, (A5)+  ;   
-    BSR put_number  ;   
+    MOVE.B  #Open_paren, (A5)+  ; put (An) with number  
+    MOVE.B  #A_, (A5)+          ;   
+    BSR put_number              ;   
     MOVE.B  #Close_paren, (A5)+ ;   
     
-    BRA move_b_dest ;   
+    BRA move_b_dest             ;   
 
-move_b_addr_reg_plus    ;   
-    MOVE.B  #Open_paren, (A5)+  ;     
-    MOVE.B  #A_, (A5)+  ;   
-    BSR put_number  ;   
+move_b_addr_reg_plus            ;   
+    MOVE.B  #Open_paren, (A5)+  ; put (An)+ with number     
+    MOVE.B  #A_, (A5)+          ;   
+    BSR put_number              ;   
     MOVE.B  #Close_paren, (A5)+ ;  
-    MOVE.B  #PLUS, (A5)+    ;   
-    BRA move_b_dest ;
+    MOVE.B  #PLUS, (A5)+        ;   
+    BRA move_b_dest             ;
 
-move_b_addr_reg_minus   ;
-    MOVE.B  #MINUS, (A5)+   ;   
+move_b_addr_reg_minus           ; put -(An) with number 
+    MOVE.B  #MINUS, (A5)+       ;   
     MOVE.B  #Open_paren, (A5)+  ;     
-    MOVE.B  #A_, (A5)+  ;   
-    BSR put_number  ;   
+    MOVE.B  #A_, (A5)+          ;   
+    BSR put_number              ;   
     MOVE.B  #Close_paren, (A5)+ ;  
 
     BRA move_b_dest ;
 
 move_b_ea_im    ;
-    CMPI.W  #$0000, D0  ;   
-    BEQ move_b_src_word ;   
+    CMPI.W  #$0000, D0          ; if register == 0  
+    BEQ move_b_src_word         ;   
     
-    CMPI.W  #$0001, D0  ;   
-    BEQ move_b_src_long ;   
+    CMPI.W  #$0001, D0          ; if register == 1  
+    BEQ move_b_src_long         ;   
     
-    CMPI.W  #$0004, D0  ;   
-    BEQ move_b_src_imm  ;   
+    CMPI.W  #$0004, D0          ; if register == 4  
+    BEQ move_b_src_imm          ;   
     
-    MOVEM.L (A7)+, A5   ;   
-    BRA invalid_code    ;   
+    MOVEM.L (A7)+, A5           ; otherwise return invalid message  
+    BRA invalid_code            ;   
 
 move_b_src_word 
-    MOVE.B  #DOLLAR, (A5)+  ;   
-    MOVEA.W (A2)+, A6      ;   
-    MOVE.W  #word, D1   ;   
-    MOVEM.L A0, -(A7)  
-    BSR hex_to_string   ;   
-    MOVEM.L (A7)+, A0   ;  
+    MOVE.B  #DOLLAR, (A5)+      ; read more opcode word size    
+    MOVEA.W (A2)+, A6           ;   
+    MOVE.W  #word, D1           ;   
+    MOVEM.L D5/A0, -(A7)        ;
+    BSR hex_to_string           ;   
+    MOVEM.L (A7)+, D5/A0        ; 
     
     BRA move_b_dest 
 move_b_src_long
-    MOVE.B  #DOLLAR, (A5)+  ;   
-    MOVEA.L (A2)+, A6      ;   
-    MOVE.W  #long, D1   ;   
-    MOVEM.L A0, -(A7)  
-    BSR hex_to_string   ;   
-    MOVEM.L (A7)+, A0   ;  
+    MOVE.B  #DOLLAR, (A5)+      ; read more opcode long size    
+    MOVEA.L (A2)+, A6           ;   
+    MOVE.W  #long, D1           ;   
+    MOVEM.L D5/A0, -(A7)        ; 
+    BSR hex_to_string           ;   
+    MOVEM.L (A7)+, D5/A0        ;
     
     BRA move_b_dest ;   
     
 move_b_src_imm      
-    MOVE.B  #SHARP, (A5)+   ;   
-    MOVE.B  #DOLLAR, (A5)+ ; 
-    MOVEA.W (A2)+, A6      ;   
-    MOVE.W  #byte, D1   ;   
-    MOVEM.L A0, -(A7)  
-    BSR hex_to_string   ;   
-    MOVEM.L (A7)+, A0   ;   
+    MOVE.B  #SHARP, (A5)+       ; read more opcode word size      
+    MOVE.B  #DOLLAR, (A5)+      ; 
+    MOVEA.W (A2)+, A6           ;   
+    MOVE.W  #byte, D1           ;   
+    MOVEM.L D5/A0, -(A7)        ;
+    BSR hex_to_string           ;   
+    MOVEM.L (A7)+, D5/A0        ;
     
     BRA move_b_dest ;
 
 move_b_dest
-    MOVE.B  #COMMA, (A5)+   ;   
-    MOVE.B  #SPACE, (A5)+   ;   
+    MOVE.B  #COMMA, (A5)+       ;   
+    MOVE.B  #SPACE, (A5)+       ;   
     
     * now do the samething for dest 
     * get dest mode and register in D1 and D0 
@@ -1098,98 +1098,98 @@ move_b_dest
     BSR get_bit         ;   D0 contains register of dest    
     
     * now D1 has dest mode, D0 has dest register number 
-    CMPI.W  #$0000, D1  ;   
-    BEQ dest_move_b_Data_reg ;    
+    CMPI.W  #$0000, D1                  ; if mode == 0     
+    BEQ dest_move_b_Data_reg            ;    
 
-    CMPI.W  #$0002, D1  ;   
-    BEQ dest_move_b_Addr_reg_paren ;   
+    CMPI.W  #$0002, D1                  ; if mode == 2  
+    BEQ dest_move_b_Addr_reg_paren      ;   
 
-    CMPI.W  #$0003, D1  ;   
-    BEQ dest_move_b_Addr_reg_plus    ;   
+    CMPI.W  #$0003, D1                  ; if mode == 3  
+    BEQ dest_move_b_Addr_reg_plus       ;   
 
-    CMPI.W  #$0004, D1  ;   
-    BEQ dest_move_b_Addr_reg_minus   ;   
+    CMPI.W  #$0004, D1                  ; if mode == 4  
+    BEQ dest_move_b_Addr_reg_minus      ;   
 
-    CMPI.W  #$0007, D1  ;   
-    BEQ dest_move_b_ea   ;   
+    CMPI.W  #$0007, D1                  ; if mode == 7  
+    BEQ dest_move_b_ea                  ;   
     
-    MOVEM.L (A7)+, A5   ;   
+    MOVEM.L (A7)+, A5                   ; otherwise return invalid message  
     BRA invalid_code    
 
 dest_move_b_Data_reg 
-    MOVE.B  #D_, (A5)+  ;
-    BSR put_number  ;   
+    MOVE.B  #D_, (A5)+                  ; put Dn with number    
+    BSR put_number                      ;   
     
-    BRA move_b_done  ;     
+    BRA move_b_done                     ;     
 
 dest_move_b_Addr_reg_paren   
-    MOVE.B  #Open_paren, (A5)+  ;     
-    MOVE.B  #A_, (A5)+  ;   
-    BSR put_number  ;   
-    MOVE.B  #Close_paren, (A5)+ ;   
+    MOVE.B  #Open_paren, (A5)+          ; putn (An) with number 
+    MOVE.B  #A_, (A5)+                  ;   
+    BSR put_number                      ;   
+    MOVE.B  #Close_paren, (A5)+         ;   
     
-    BRA move_b_done ;   
+    BRA move_b_done                     ;   
 
-dest_move_b_addr_reg_plus    ;   
-    MOVE.B  #Open_paren, (A5)+  ;     
-    MOVE.B  #A_, (A5)+  ;   
-    BSR put_number  ;   
-    MOVE.B  #Close_paren, (A5)+ ;  
-    MOVE.B  #PLUS, (A5)+    ;   
-    BRA move_b_done ;
+dest_move_b_addr_reg_plus               ; put (An)+ with number    
+    MOVE.B  #Open_paren, (A5)+          ;     
+    MOVE.B  #A_, (A5)+                  ;   
+    BSR put_number                      ;   
+    MOVE.B  #Close_paren, (A5)+         ;  
+    MOVE.B  #PLUS, (A5)+                ;   
+    BRA move_b_done                     ;
 
-dest_move_b_addr_reg_minus   ;
-    MOVE.B  #MINUS, (A5)+   ;   
-    MOVE.B  #Open_paren, (A5)+  ;     
-    MOVE.B  #A_, (A5)+  ;   
-    BSR put_number  ;   
-    MOVE.B  #Close_paren, (A5)+ ;  
+dest_move_b_addr_reg_minus              ;
+    MOVE.B  #MINUS, (A5)+               ; put -(An) with number    
+    MOVE.B  #Open_paren, (A5)+          ;     
+    MOVE.B  #A_, (A5)+                  ;   
+    BSR put_number                      ;   
+    MOVE.B  #Close_paren, (A5)+         ;  
 
-    BRA move_b_done ;
+    BRA move_b_done                     ;
 
-dest_move_b_ea    ;
-    CMPI.W  #$0000, D0  ;   
-    BEQ dest_move_b_src_word ;   
+dest_move_b_ea                          ;
+    CMPI.W  #$0000, D0                  ; if register == 0   
+    BEQ dest_move_b_src_word            ;   
     
-    CMPI.W  #$0001, D0  ;   
-    BEQ dest_move_b_src_long ;   
+    CMPI.W  #$0001, D0                  ; if register == 1  
+    BEQ dest_move_b_src_long            ;   
     
-    MOVEM.L (A7)+, A5   ;   
-    BRA invalid_code    ;   
+    MOVEM.L (A7)+, A5                   ;   
+    BRA invalid_code                    ; otherwise return invalid message     
 
 dest_move_b_src_word 
-    MOVE.B  #DOLLAR, (A5)+  ;   
-    MOVEA.W (A2)+, A6      ;   
-    MOVE.W  #word, D1   ;   
-    MOVEM.L A0, -(A7)  
-    BSR hex_to_string   ;   
-    MOVEM.L (A7)+, A0   ;  
+    MOVE.B  #DOLLAR, (A5)+              ; read word size opcode more      
+    MOVEA.W (A2)+, A6                   ;   
+    MOVE.W  #word, D1                   ;   
+    MOVEM.L D5/A0, -(A7)                ;
+    BSR hex_to_string                   ;   
+    MOVEM.L (A7)+, D5/A0                ;
     
     BRA move_b_done 
 dest_move_b_src_long
-    MOVE.B  #DOLLAR, (A5)+  ;   
-    MOVEA.L (A2)+, A6      ;   
-    MOVE.W  #long, D1   ;   
-    MOVEM.L A0, -(A7)  
-    BSR hex_to_string   ;   
-    MOVEM.L (A7)+, A0   ;  
+    MOVE.B  #DOLLAR, (A5)+              ; read long size opcode more    
+    MOVEA.L (A2)+, A6                   ;   
+    MOVE.W  #long, D1                   ;   
+    MOVEM.L D5/A0, -(A7)                ; 
+    BSR hex_to_string                   ;   
+    MOVEM.L (A7)+, D5/A0                ;
     
-    BRA move_b_done ;   
+    BRA move_b_done                     ;   
     
 move_b_done 
     BRA ori_done    ;   
     
-* two_start ********************
+* two_start *************************************************************************************   
 MOVE_MOVEA_L
     * check dest mode part and distinguish whether MOVE.L or MOVEA.L    
     MOVEM.L A5, -(A7)   ;   save A5 in the stack (pointer to result message)  
     MOVEA.L A6, A0      ;   starting address of temp      
     MOVEA.L A6, A5      ;   move starting address of curent temp Message into A0
     
-    MOVE.B  #M_, (A5)+   ;   
-    MOVE.B  #O_, (A5)+   ;   
-    MOVE.B  #V_, (A5)+  ;       
-    MOVE.B  #E_, (A5)+   ; 
+    MOVE.B  #M_, (A5)+      ;   
+    MOVE.B  #O_, (A5)+      ;   
+    MOVE.B  #V_, (A5)+      ;       
+    MOVE.B  #E_, (A5)+      ; 
     
     * get source mode and register in D1 and D0 
     MOVE.W  D5, D0      ;   copy opcode into D0 
@@ -1201,18 +1201,18 @@ MOVE_MOVEA_L
     BEQ MOVEA_L 
     
     * other wise, it is move L  ;   
-    MOVE.B  #PERIOD, (A5)+  ;   
-    MOVE.B  #L_, (A5)+  ;   
-    MOVE.B  #TAB, (A5)+ ;   
+    MOVE.B  #PERIOD, (A5)+      ;   
+    MOVE.B  #L_, (A5)+          ;   
+    MOVE.B  #TAB, (A5)+         ;   
     
-    BRA MOVE_L  ;   
+    BRA MOVE_L                  ;   
 
     
 MOVEA_L 
-    MOVE.B  #A_, (A5)+  ;   
-    MOVE.B  #PERIOD, (A5)+  ;   
-    MOVE.B  #L_, (A5)+  ;   
-    MOVE.B  #TAB, (A5)+    ;   
+    MOVE.B  #A_, (A5)+          ;   
+    MOVE.B  #PERIOD, (A5)+      ;   
+    MOVE.B  #L_, (A5)+          ;   
+    MOVE.B  #TAB, (A5)+         ;   
     * get source mode and register in D1 and D0 
     MOVE.W  D5, D0      ;   copy opcode into D0 
     MOVE.W  #$0038, D6  ;   bit mask in D6    
@@ -1226,106 +1226,106 @@ MOVEA_L
     BSR get_bit         ;   
     
     * now D1 has source mode, D0 has source register number 
-    CMPI.W  #$0000, D1  ;   
-    BEQ movea_l_Data_reg ;   
+    CMPI.W  #$0000, D1          ; if mode == 0
+    BEQ movea_l_Data_reg        ;   
 
-    CMPI.W  #$0001, D1  ;   
-    BEQ movea_l_Addr_reg ;   
+    CMPI.W  #$0001, D1          ; if mode == 1  
+    BEQ movea_l_Addr_reg        ;   
 
-    CMPI.W  #$0002, D1  ;   
-    BEQ movea_l_Addr_reg_paren ;   
+    CMPI.W  #$0002, D1          ; if mode == 2  
+    BEQ movea_l_Addr_reg_paren  ;   
 
-    CMPI.W  #$0003, D1  ;   
-    BEQ movea_l_Addr_reg_plus    ;   
+    CMPI.W  #$0003, D1          ; if mode == 3  
+    BEQ movea_l_Addr_reg_plus   ;   
 
-    CMPI.W  #$0004, D1  ;   
-    BEQ movea_l_Addr_reg_minus   ;   
+    CMPI.W  #$0004, D1          ; if mode == 4  
+    BEQ movea_l_Addr_reg_minus  ;   
 
-    CMPI.W  #$0007, D1  ;   
-    BEQ movea_l_ea_im    ;   
+    CMPI.W  #$0007, D1          ; if mode == 7  
+    BEQ movea_l_ea_im           ;   
     
-    MOVEM.L (A7)+, A5   ;   
+    MOVEM.L (A7)+, A5           ; otherwise return invalid message  
     BRA invalid_code    
 
 movea_l_Data_reg 
-    MOVE.B  #D_, (A5)+  ;
-    BSR put_number  ;   
+    MOVE.B  #D_, (A5)+          ; put Dn with number    
+    BSR put_number              ;   
     
-    BRA movea_l_dest  ;   
+    BRA movea_l_dest            ;   
 
 movea_l_Addr_reg 
-    MOVE.B  #A_, (A5)+  ;
-    BSR put_number  ;   
+    MOVE.B  #A_, (A5)+          ; put An with number    
+    BSR put_number              ;   
     
-    BRA movea_l_dest ;
+    BRA movea_l_dest            ;
 
 movea_l_Addr_reg_paren   
-    MOVE.B  #Open_paren, (A5)+  ;     
-    MOVE.B  #A_, (A5)+  ;   
-    BSR put_number  ;   
+    MOVE.B  #Open_paren, (A5)+  ; put (An) with number  
+    MOVE.B  #A_, (A5)+          ;   
+    BSR put_number              ;   
     MOVE.B  #Close_paren, (A5)+ ;   
     
-    BRA movea_l_dest ;   
+    BRA movea_l_dest            ;   
 
-movea_l_addr_reg_plus    ;   
-    MOVE.B  #Open_paren, (A5)+  ;     
-    MOVE.B  #A_, (A5)+  ;   
-    BSR put_number  ;   
+movea_l_addr_reg_plus           ;   
+    MOVE.B  #Open_paren, (A5)+  ; put (An)+ with number 
+    MOVE.B  #A_, (A5)+          ;   
+    BSR put_number              ;   
     MOVE.B  #Close_paren, (A5)+ ;  
-    MOVE.B  #PLUS, (A5)+    ;   
-    BRA movea_l_dest ;
+    MOVE.B  #PLUS, (A5)+        ;   
+    BRA movea_l_dest            ;
 
-movea_l_addr_reg_minus   ;
-    MOVE.B  #MINUS, (A5)+   ;   
+movea_l_addr_reg_minus          ;
+    MOVE.B  #MINUS, (A5)+       ; put -(An) with number 
     MOVE.B  #Open_paren, (A5)+  ;     
-    MOVE.B  #A_, (A5)+  ;   
-    BSR put_number  ;   
+    MOVE.B  #A_, (A5)+          ;   
+    BSR put_number              ;   
     MOVE.B  #Close_paren, (A5)+ ;  
 
-    BRA movea_l_dest ;
+    BRA movea_l_dest            ;
 
-movea_l_ea_im    ;
-    CMPI.W  #$0000, D0  ;   
-    BEQ movea_l_src_word ;   
+movea_l_ea_im                   ;
+    CMPI.W  #$0000, D0          ; if register == 0  
+    BEQ movea_l_src_word        ;   
     
-    CMPI.W  #$0001, D0  ;   
-    BEQ movea_l_src_long ;   
+    CMPI.W  #$0001, D0          ; if register == 1  
+    BEQ movea_l_src_long        ;   
     
-    CMPI.W  #$0004, D0  ;   
-    BEQ movea_l_src_imm  ;   
+    CMPI.W  #$0004, D0          ; if register == 4  
+    BEQ movea_l_src_imm         ;   
     
-    MOVEM.L (A7)+, A5   ;   
-    BRA invalid_code    ;   
+    MOVEM.L (A7)+, A5           ; otherwise return invalid message  
+    BRA invalid_code            ;   
 
 movea_l_src_word 
-    MOVE.B  #DOLLAR, (A5)+  ;   
-    MOVEA.W (A2)+, A6      ;   
-    MOVE.W  #word, D1   ;   
-    MOVEM.L D5/A0, -(A7)  
-    BSR hex_to_string   ;   
-    MOVEM.L (A7)+, D5/A0   ;  
+    MOVE.B  #DOLLAR, (A5)+      ; read word size more opcode    
+    MOVEA.W (A2)+, A6           ;   
+    MOVE.W  #word, D1           ;   
+    MOVEM.L D5/A0, -(A7)        ;
+    BSR hex_to_string           ;   
+    MOVEM.L (A7)+, D5/A0        ;  
     
     BRA movea_l_dest 
 movea_l_src_long
-    MOVE.B  #DOLLAR, (A5)+  ;   
-    MOVEA.L (A2)+, A6      ;   
-    MOVE.W  #long, D1   ;   
-    MOVEM.L D5/A0, -(A7)  
-    BSR hex_to_string   ;   
-    MOVEM.L (A7)+, D5/A0   ; 
+    MOVE.B  #DOLLAR, (A5)+      ; read long size more opcode    
+    MOVEA.L (A2)+, A6           ;   
+    MOVE.W  #long, D1           ;   
+    MOVEM.L D5/A0, -(A7)        ;
+    BSR hex_to_string           ;   
+    MOVEM.L (A7)+, D5/A0        ; 
     
-    BRA movea_l_dest ;   
+    BRA movea_l_dest            ;   
     
 movea_l_src_imm      
-    MOVE.B  #SHARP, (A5)+   ;   
-    MOVE.B  #DOLLAR, (A5)+ ; 
-    MOVEA.L (A2)+, A6      ;   
-    MOVE.W  #long, D1   ;   
-    MOVEM.L D5/A0, -(A7)  
-    BSR hex_to_string   ;   
-    MOVEM.L (A7)+, D5/A0   ; 
+    MOVE.B  #SHARP, (A5)+       ; read long size more opcode    
+    MOVE.B  #DOLLAR, (A5)+      ; 
+    MOVEA.L (A2)+, A6           ;   
+    MOVE.W  #long, D1           ;   
+    MOVEM.L D5/A0, -(A7)        ;
+    BSR hex_to_string           ;   
+    MOVEM.L (A7)+, D5/A0        ; 
     
-    BRA movea_l_dest ;
+    BRA movea_l_dest            ;
 
 movea_l_dest
     MOVE.B  #COMMA, (A5)+   ;   
@@ -1361,106 +1361,106 @@ MOVE_L
     BSR get_bit         ;   
     
     * now D1 has source mode, D0 has source register number 
-    CMPI.W  #$0000, D1  ;   
-    BEQ move_l_Data_reg ;   
+    CMPI.W  #$0000, D1              ; if mode == 0  
+    BEQ move_l_Data_reg             ;   
 
-    CMPI.W  #$0001, D1  ;   
-    BEQ move_l_Addr_reg ;   
+    CMPI.W  #$0001, D1              ; if mode == 1    
+    BEQ move_l_Addr_reg             ;   
 
-    CMPI.W  #$0002, D1  ;   
-    BEQ move_l_Addr_reg_paren ;   
+    CMPI.W  #$0002, D1              ; if mode == 2  
+    BEQ move_l_Addr_reg_paren       ;   
 
-    CMPI.W  #$0003, D1  ;   
-    BEQ move_l_Addr_reg_plus    ;   
+    CMPI.W  #$0003, D1              ; if mode == 3  
+    BEQ move_l_Addr_reg_plus        ;   
 
-    CMPI.W  #$0004, D1  ;   
-    BEQ move_l_Addr_reg_minus   ;   
+    CMPI.W  #$0004, D1              ; if mode == 4  
+    BEQ move_l_Addr_reg_minus       ;   
 
-    CMPI.W  #$0007, D1  ;   
-    BEQ move_l_ea_im    ;   
+    CMPI.W  #$0007, D1              ; if mode == 7  
+    BEQ move_l_ea_im                ;   
     
-    MOVEM.L (A7)+, A5   ;   
+    MOVEM.L (A7)+, A5               ; otherwise return invalid message  
     BRA invalid_code    
 
 move_l_Data_reg 
-    MOVE.B  #D_, (A5)+  ;
-    BSR put_number  ;   
+    MOVE.B  #D_, (A5)+              ; put Dn with number    
+    BSR put_number                  ;   
     
-    BRA move_l_dest  ;   
+    BRA move_l_dest                 ;   
 
 move_l_Addr_reg 
-    MOVE.B  #A_, (A5)+  ;
-    BSR put_number  ;   
+    MOVE.B  #A_, (A5)+              ; put An with number    
+    BSR put_number                  ;   
     
-    BRA move_l_dest ;
+    BRA move_l_dest                 ;
 
 move_l_Addr_reg_paren   
-    MOVE.B  #Open_paren, (A5)+  ;     
-    MOVE.B  #A_, (A5)+  ;   
-    BSR put_number  ;   
-    MOVE.B  #Close_paren, (A5)+ ;   
+    MOVE.B  #Open_paren, (A5)+      ; put (An) with number   
+    MOVE.B  #A_, (A5)+              ;   
+    BSR put_number                  ;   
+    MOVE.B  #Close_paren, (A5)+     ;   
     
-    BRA move_l_dest ;   
+    BRA move_l_dest                 ;   
 
-move_l_addr_reg_plus    ;   
-    MOVE.B  #Open_paren, (A5)+  ;     
-    MOVE.B  #A_, (A5)+  ;   
-    BSR put_number  ;   
-    MOVE.B  #Close_paren, (A5)+ ;  
-    MOVE.B  #PLUS, (A5)+    ;   
-    BRA move_l_dest ;
+move_l_addr_reg_plus                ;   
+    MOVE.B  #Open_paren, (A5)+      ; put (An)+ with number 
+    MOVE.B  #A_, (A5)+              ;   
+    BSR put_number                  ;   
+    MOVE.B  #Close_paren, (A5)+     ;  
+    MOVE.B  #PLUS, (A5)+            ;   
+    BRA move_l_dest                 ;
 
 move_l_addr_reg_minus   ;
-    MOVE.B  #MINUS, (A5)+   ;   
-    MOVE.B  #Open_paren, (A5)+  ;     
-    MOVE.B  #A_, (A5)+  ;   
-    BSR put_number  ;   
-    MOVE.B  #Close_paren, (A5)+ ;  
+    MOVE.B  #MINUS, (A5)+           ; put -(An) with number 
+    MOVE.B  #Open_paren, (A5)+      ;     
+    MOVE.B  #A_, (A5)+              ;   
+    BSR put_number                  ;   
+    MOVE.B  #Close_paren, (A5)+     ;  
 
-    BRA move_l_dest ;
+    BRA move_l_dest                 ;
 
 move_l_ea_im    ;
-    CMPI.W  #$0000, D0  ;   
-    BEQ move_l_src_word ;   
+    CMPI.W  #$0000, D0              ; if register == 0  
+    BEQ move_l_src_word             ;   
     
-    CMPI.W  #$0001, D0  ;   
-    BEQ move_l_src_long ;   
+    CMPI.W  #$0001, D0              ; if register == 1  
+    BEQ move_l_src_long             ;   
     
-    CMPI.W  #$0004, D0  ;   
-    BEQ move_l_src_imm  ;   
+    CMPI.W  #$0004, D0              ; if register == 4  
+    BEQ move_l_src_imm              ;   
     
-    MOVEM.L (A7)+, A5   ;   
-    BRA invalid_code    ;   
+    MOVEM.L (A7)+, A5               ; otherwise return invalidemessage  
+    BRA invalid_code                ;   
 
 move_l_src_word 
-    MOVE.B  #DOLLAR, (A5)+  ;   
-    MOVEA.W (A2)+, A6      ;   
-    MOVE.W  #word, D1   ;   
-    MOVEM.L D5/A0, -(A7)  
-    BSR hex_to_string   ;   
-    MOVEM.L (A7)+, D5/A0   ;
+    MOVE.B  #DOLLAR, (A5)+          ; read word size more opcode      
+    MOVEA.W (A2)+, A6               ;   
+    MOVE.W  #word, D1               ;   
+    MOVEM.L D5/A0, -(A7)            ;
+    BSR hex_to_string               ;   
+    MOVEM.L (A7)+, D5/A0            ;
     
     BRA move_l_dest 
 move_l_src_long
-    MOVE.B  #DOLLAR, (A5)+  ;   
-    MOVEA.L (A2)+, A6      ;   
-    MOVE.W  #long, D1   ;   
-    MOVEM.L D5/A0, -(A7)  
-    BSR hex_to_string   ;   
-    MOVEM.L (A7)+, D5/A0   ;
+    MOVE.B  #DOLLAR, (A5)+          ; read long size more opcode    
+    MOVEA.L (A2)+, A6               ;   
+    MOVE.W  #long, D1               ;   
+    MOVEM.L D5/A0, -(A7)            ;  
+    BSR hex_to_string               ;   
+    MOVEM.L (A7)+, D5/A0            ;
     
-    BRA move_l_dest ;   
+    BRA move_l_dest                 ;   
     
 move_l_src_imm      
-    MOVE.B  #SHARP, (A5)+   ;   
-    MOVE.B  #DOLLAR, (A5)+ ; 
-    MOVEA.L (A2)+, A6      ;   
-    MOVE.W  #long, D1   ;   
-    MOVEM.L D5/A0, -(A7)  
-    BSR hex_to_string   ;   
-    MOVEM.L (A7)+, D5/A0   ;
+    MOVE.B  #SHARP, (A5)+           ; read long size more opcode       
+    MOVE.B  #DOLLAR, (A5)+          ; 
+    MOVEA.L (A2)+, A6               ;   
+    MOVE.W  #long, D1               ;   
+    MOVEM.L D5/A0, -(A7)            ;
+    BSR hex_to_string               ;   
+    MOVEM.L (A7)+, D5/A0            ;
     
-    BRA move_l_dest ;
+    BRA move_l_dest                 ;
 
 move_l_dest
     MOVE.B  #COMMA, (A5)+   ;   
@@ -1480,89 +1480,89 @@ move_l_dest
     BSR get_bit         ;   D0 contains register of dest    
     
     * now D1 has dest mode, D0 has dest register number 
-    CMPI.W  #$0000, D1  ;   
-    BEQ dest_move_l_Data_reg ;    
+    CMPI.W  #$0000, D1                  ; if mode == 0     
+    BEQ dest_move_l_Data_reg            ;    
 
-    CMPI.W  #$0002, D1  ;   
-    BEQ dest_move_l_Addr_reg_paren ;   
+    CMPI.W  #$0002, D1                  ; if mode == 2  
+    BEQ dest_move_l_Addr_reg_paren      ;   
 
-    CMPI.W  #$0003, D1  ;   
-    BEQ dest_move_l_Addr_reg_plus    ;   
+    CMPI.W  #$0003, D1                  ; if mode == 3  
+    BEQ dest_move_l_Addr_reg_plus       ;   
 
-    CMPI.W  #$0004, D1  ;   
-    BEQ dest_move_l_Addr_reg_minus   ;   
+    CMPI.W  #$0004, D1                  ; if mode == 4  
+    BEQ dest_move_l_Addr_reg_minus      ;   
 
-    CMPI.W  #$0007, D1  ;   
-    BEQ dest_move_l_ea   ;   
+    CMPI.W  #$0007, D1                  ; if mode == 7  
+    BEQ dest_move_l_ea                  ;   
     
-    MOVEM.L (A7)+, A5   ;   
+    MOVEM.L (A7)+, A5                   ; otherwise return invalid message     
     BRA invalid_code    
 
 dest_move_l_Data_reg 
-    MOVE.B  #D_, (A5)+  ;
-    BSR put_number  ;   
+    MOVE.B  #D_, (A5)+          ; put Dn with number    
+    BSR put_number              ;   
     
-    BRA move_l_done  ;     
+    BRA move_l_done             ;     
 
 dest_move_l_Addr_reg_paren   
-    MOVE.B  #Open_paren, (A5)+  ;     
-    MOVE.B  #A_, (A5)+  ;   
-    BSR put_number  ;   
+    MOVE.B  #Open_paren, (A5)+  ; put (An) with number       
+    MOVE.B  #A_, (A5)+          ;   
+    BSR put_number              ;   
     MOVE.B  #Close_paren, (A5)+ ;   
     
-    BRA move_l_done ;   
+    BRA move_l_done             ;   
 
-dest_move_l_addr_reg_plus    ;   
-    MOVE.B  #Open_paren, (A5)+  ;     
-    MOVE.B  #A_, (A5)+  ;   
-    BSR put_number  ;   
+dest_move_l_addr_reg_plus       ;   
+    MOVE.B  #Open_paren, (A5)+  ; put (An)+ with number      
+    MOVE.B  #A_, (A5)+          ;   
+    BSR put_number              ;   
     MOVE.B  #Close_paren, (A5)+ ;  
-    MOVE.B  #PLUS, (A5)+    ;   
-    BRA move_l_done ;
+    MOVE.B  #PLUS, (A5)+        ;   
+    BRA move_l_done             ;
 
-dest_move_l_addr_reg_minus   ;
-    MOVE.B  #MINUS, (A5)+   ;   
+dest_move_l_addr_reg_minus      ;
+    MOVE.B  #MINUS, (A5)+       ; put -(An) with number 
     MOVE.B  #Open_paren, (A5)+  ;     
-    MOVE.B  #A_, (A5)+  ;   
-    BSR put_number  ;   
+    MOVE.B  #A_, (A5)+          ;   
+    BSR put_number              ;   
     MOVE.B  #Close_paren, (A5)+ ;  
 
-    BRA move_l_done ;
+    BRA move_l_done             ;
 
-dest_move_l_ea    ;
-    CMPI.W  #$0000, D0  ;   
-    BEQ dest_move_l_src_word ;   
+dest_move_l_ea                  ;
+    CMPI.W  #$0000, D0          ; if register == 0  
+    BEQ dest_move_l_src_word    ;   
     
-    CMPI.W  #$0001, D0  ;   
-    BEQ dest_move_l_src_long ;   
+    CMPI.W  #$0001, D0          ; if register == 1  
+    BEQ dest_move_l_src_long    ;   
     
-    MOVEM.L (A7)+, A5   ;   
-    BRA invalid_code    ;   
+    MOVEM.L (A7)+, A5           ;   
+    BRA invalid_code            ;   
 
 dest_move_l_src_word 
-    MOVE.B  #DOLLAR, (A5)+  ;   
-    MOVEA.W (A2)+, A6      ;   
-    MOVE.W  #word, D1   ;   
-    MOVEM.L D5/A0, -(A7)  
-    BSR hex_to_string   ;   
-    MOVEM.L (A7)+, D5/A0   ;
+    MOVE.B  #DOLLAR, (A5)+      ;   
+    MOVEA.W (A2)+, A6           ; read word size opcode more       
+    MOVE.W  #word, D1           ;   
+    MOVEM.L D5/A0, -(A7)        ;
+    BSR hex_to_string           ;   
+    MOVEM.L (A7)+, D5/A0        ;
     
     BRA move_l_done 
 dest_move_l_src_long
-    MOVE.B  #DOLLAR, (A5)+  ;   
-    MOVEA.L (A2)+, A6      ;   
-    MOVE.W  #long, D1   ;   
-    MOVEM.L D5/A0, -(A7)  
-    BSR hex_to_string   ;   
-    MOVEM.L (A7)+, D5/A0   ;
+    MOVE.B  #DOLLAR, (A5)+      ; read long size opcode more    
+    MOVEA.L (A2)+, A6           ;   
+    MOVE.W  #long, D1           ;   
+    MOVEM.L D5/A0, -(A7)        ; 
+    BSR hex_to_string           ;   
+    MOVEM.L (A7)+, D5/A0        ;
     
-    BRA move_l_done ;   
+    BRA move_l_done             ;   
     
 move_l_done 
     
     BRA ori_done    ;    
 
-* three_start ******************* 
+* three_start ***************************************************************************   
 MOVE_MOVEA_W    
 * check dest mode part and distinguish whether MOVE.L or MOVEA.L    
     MOVEM.L A5, -(A7)   ;   save A5 in the stack (pointer to result message)  
@@ -1580,22 +1580,22 @@ MOVE_MOVEA_W
     MOVE.B  #6, D7      ;   shift value after masking   
     BSR get_bit         ;   D0 contains 6, 7, 8th bits  
     
-    CMPI.W  #$0001, D0  ;   
+    CMPI.W  #$0001, D0          ;   
     BEQ MOVEA_W 
     
     * other wise, it is move L  ;   
-    MOVE.B  #PERIOD, (A5)+  ;   
-    MOVE.B  #W_, (A5)+  ;   
-    MOVE.B  #TAB, (A5)+ ;   
+    MOVE.B  #PERIOD, (A5)+      ;   
+    MOVE.B  #W_, (A5)+          ;   
+    MOVE.B  #TAB, (A5)+         ;   
     
-    BRA MOVE_W  ;   
+    BRA MOVE_W                  ;   
 
     
 MOVEA_W 
-    MOVE.B  #A_, (A5)+  ;   
+    MOVE.B  #A_, (A5)+      ;   
     MOVE.B  #PERIOD, (A5)+  ;   
-    MOVE.B  #W_, (A5)+  ;   
-    MOVE.B  #TAB, (A5)+    ;   
+    MOVE.B  #W_, (A5)+      ;   
+    MOVE.B  #TAB, (A5)+     ;   
     * get source mode and register in D1 and D0 
     MOVE.W  D5, D0      ;   copy opcode into D0 
     MOVE.W  #$0038, D6  ;   bit mask in D6    
@@ -1609,106 +1609,106 @@ MOVEA_W
     BSR get_bit         ;   
     
     * now D1 has source mode, D0 has source register number 
-    CMPI.W  #$0000, D1  ;   
-    BEQ movea_w_Data_reg ;   
+    CMPI.W  #$0000, D1          ; if mode == 0  
+    BEQ movea_w_Data_reg        ;   
 
-    CMPI.W  #$0001, D1  ;   
-    BEQ movea_w_Addr_reg ;   
+    CMPI.W  #$0001, D1          ; if mode == 1  
+    BEQ movea_w_Addr_reg        ;   
 
-    CMPI.W  #$0002, D1  ;   
-    BEQ movea_w_Addr_reg_paren ;   
+    CMPI.W  #$0002, D1          ; if mode == 2  
+    BEQ movea_w_Addr_reg_paren  ;   
 
-    CMPI.W  #$0003, D1  ;   
-    BEQ movea_w_Addr_reg_plus    ;   
+    CMPI.W  #$0003, D1          ; if mode == 3  
+    BEQ movea_w_Addr_reg_plus   ;   
 
-    CMPI.W  #$0004, D1  ;   
-    BEQ movea_w_Addr_reg_minus   ;   
+    CMPI.W  #$0004, D1          ; if mode == 4  
+    BEQ movea_w_Addr_reg_minus  ;   
 
-    CMPI.W  #$0007, D1  ;   
-    BEQ movea_w_ea_im    ;   
+    CMPI.W  #$0007, D1          ; if mode == 7  
+    BEQ movea_w_ea_im           ;   
     
-    MOVEM.L (A7)+, A5   ;   
+    MOVEM.L (A7)+, A5           ; otherwise return invalid message  
     BRA invalid_code    
 
 movea_w_Data_reg 
-    MOVE.B  #D_, (A5)+  ;
-    BSR put_number  ;   
+    MOVE.B  #D_, (A5)+          ; put Dn with number    
+    BSR put_number              ;   
     
-    BRA movea_w_dest  ;   
+    BRA movea_w_dest            ;   
 
 movea_w_Addr_reg 
-    MOVE.B  #A_, (A5)+  ;
-    BSR put_number  ;   
+    MOVE.B  #A_, (A5)+          ; put An with number    
+    BSR put_number              ;   
     
-    BRA movea_w_dest ;
+    BRA movea_w_dest            ;
 
 movea_w_Addr_reg_paren   
-    MOVE.B  #Open_paren, (A5)+  ;     
-    MOVE.B  #A_, (A5)+  ;   
-    BSR put_number  ;   
+    MOVE.B  #Open_paren, (A5)+  ; put (An) with number  
+    MOVE.B  #A_, (A5)+          ;   
+    BSR put_number              ;   
     MOVE.B  #Close_paren, (A5)+ ;   
     
-    BRA movea_w_dest ;   
+    BRA movea_w_dest            ;   
 
-movea_w_addr_reg_plus    ;   
-    MOVE.B  #Open_paren, (A5)+  ;     
-    MOVE.B  #A_, (A5)+  ;   
-    BSR put_number  ;   
+movea_w_addr_reg_plus           ;   
+    MOVE.B  #Open_paren, (A5)+  ; put (An)+ with number      
+    MOVE.B  #A_, (A5)+          ;   
+    BSR put_number              ;   
     MOVE.B  #Close_paren, (A5)+ ;  
-    MOVE.B  #PLUS, (A5)+    ;   
-    BRA movea_w_dest ;
+    MOVE.B  #PLUS, (A5)+        ;   
+    BRA movea_w_dest            ;
 
-movea_w_addr_reg_minus   ;
-    MOVE.B  #MINUS, (A5)+   ;   
+movea_w_addr_reg_minus          ;
+    MOVE.B  #MINUS, (A5)+       ; put -(An) with number 
     MOVE.B  #Open_paren, (A5)+  ;     
-    MOVE.B  #A_, (A5)+  ;   
-    BSR put_number  ;   
+    MOVE.B  #A_, (A5)+          ;   
+    BSR put_number              ;   
     MOVE.B  #Close_paren, (A5)+ ;  
 
-    BRA movea_w_dest ;
+    BRA movea_w_dest            ;
 
-movea_w_ea_im    ;
-    CMPI.W  #$0000, D0  ;   
-    BEQ movea_w_src_word ;   
+movea_w_ea_im                   ;
+    CMPI.W  #$0000, D0          ;   if register == 0    
+    BEQ movea_w_src_word        ;   
     
-    CMPI.W  #$0001, D0  ;   
-    BEQ movea_w_src_long ;   
+    CMPI.W  #$0001, D0          ;   if register == 1    
+    BEQ movea_w_src_long        ;   
     
-    CMPI.W  #$0004, D0  ;   
-    BEQ movea_w_src_imm  ;   
+    CMPI.W  #$0004, D0          ;   if register == 4    
+    BEQ movea_w_src_imm         ;   
     
-    MOVEM.L (A7)+, A5   ;   
-    BRA invalid_code    ;   
+    MOVEM.L (A7)+, A5           ;   
+    BRA invalid_code            ; return invalid message    
 
 movea_w_src_word 
-    MOVE.B  #DOLLAR, (A5)+  ;   
-    MOVEA.W (A2)+, A6      ;   
-    MOVE.W  #word, D1   ;   
-    MOVEM.L D5/A0, -(A7)  
-    BSR hex_to_string   ;   
-    MOVEM.L (A7)+, D5/A0   ;  
+    MOVE.B  #DOLLAR, (A5)+      ;   
+    MOVEA.W (A2)+, A6           ; read more opcode wordsize    
+    MOVE.W  #word, D1           ;   
+    MOVEM.L D5/A0, -(A7)        ;        
+    BSR hex_to_string           ;   
+    MOVEM.L (A7)+, D5/A0        ;  
     
-    BRA movea_w_dest 
+    BRA movea_w_dest            ; 
 movea_w_src_long
-    MOVE.B  #DOLLAR, (A5)+  ;   
-    MOVEA.L (A2)+, A6      ;   
-    MOVE.W  #long, D1   ;   
-    MOVEM.L D5/A0, -(A7)  
-    BSR hex_to_string   ;   
-    MOVEM.L (A7)+, D5/A0   ; 
+    MOVE.B  #DOLLAR, (A5)+      ;   
+    MOVEA.L (A2)+, A6           ; read more opcode longsize 
+    MOVE.W  #long, D1           ;   
+    MOVEM.L D5/A0, -(A7)        ; 
+    BSR hex_to_string           ;   
+    MOVEM.L (A7)+, D5/A0        ; 
     
-    BRA movea_w_dest ;   
+    BRA movea_w_dest            ;   
     
 movea_w_src_imm      
-    MOVE.B  #SHARP, (A5)+   ;   
-    MOVE.B  #DOLLAR, (A5)+ ; 
-    MOVEA.W (A2)+, A6      ;   
-    MOVE.W  #word, D1   ;   
-    MOVEM.L D5/A0, -(A7)  
-    BSR hex_to_string   ;   
-    MOVEM.L (A7)+, D5/A0   ; 
+    MOVE.B  #SHARP, (A5)+       ;   
+    MOVE.B  #DOLLAR, (A5)+      ; 
+    MOVEA.W (A2)+, A6           ; read more opcode wordsize 
+    MOVE.W  #word, D1           ;   
+    MOVEM.L D5/A0, -(A7)        ;
+    BSR hex_to_string           ;   
+    MOVEM.L (A7)+, D5/A0        ; 
     
-    BRA movea_w_dest ;
+    BRA movea_w_dest            ;
 
 movea_w_dest
     MOVE.B  #COMMA, (A5)+   ;   
@@ -1724,8 +1724,8 @@ movea_w_dest
     * now D1 has dest mode, D0 has dest register number 
 
 dest_movea_w_Addr_reg        
-    MOVE.B  #A_, (A5)+  ;   
-    BSR put_number  ;      
+    MOVE.B  #A_, (A5)+      ;   
+    BSR put_number          ;      
 
 movea_w_done    
     BRA ori_done    ;   
@@ -1744,106 +1744,106 @@ MOVE_W
     BSR get_bit         ;   
     
     * now D1 has source mode, D0 has source register number 
-    CMPI.W  #$0000, D1  ;   
-    BEQ move_w_Data_reg ;   
+    CMPI.W  #$0000, D1          ; if mode == 0  
+    BEQ move_w_Data_reg         ;   
 
-    CMPI.W  #$0001, D1  ;   
-    BEQ move_w_Addr_reg ;   
+    CMPI.W  #$0001, D1          ; if mode == 1  
+    BEQ move_w_Addr_reg         ;   
 
-    CMPI.W  #$0002, D1  ;   
-    BEQ move_w_Addr_reg_paren ;   
+    CMPI.W  #$0002, D1          ; if mode == 2     
+    BEQ move_w_Addr_reg_paren   ;   
 
-    CMPI.W  #$0003, D1  ;   
+    CMPI.W  #$0003, D1          ; if mode == 3  
     BEQ move_w_Addr_reg_plus    ;   
 
-    CMPI.W  #$0004, D1  ;   
+    CMPI.W  #$0004, D1          ; if mode == 4  
     BEQ move_w_Addr_reg_minus   ;   
 
-    CMPI.W  #$0007, D1  ;   
-    BEQ move_w_ea_im    ;   
+    CMPI.W  #$0007, D1          ; if mode == 7  
+    BEQ move_w_ea_im            ;   
     
-    MOVEM.L (A7)+, A5   ;   
+    MOVEM.L (A7)+, A5           ; otherwise return invalid opcode   
     BRA invalid_code    
 
 move_w_Data_reg 
-    MOVE.B  #D_, (A5)+  ;
-    BSR put_number  ;   
+    MOVE.B  #D_, (A5)+          ; put Dn with number    
+    BSR put_number              ;   
     
-    BRA move_w_dest  ;   
+    BRA move_w_dest             ;   
 
 move_w_Addr_reg 
-    MOVE.B  #A_, (A5)+  ;
-    BSR put_number  ;   
+    MOVE.B  #A_, (A5)+          ; put An with number    
+    BSR put_number              ;   
     
-    BRA move_w_dest ;
+    BRA move_w_dest             ;
 
 move_w_Addr_reg_paren   
-    MOVE.B  #Open_paren, (A5)+  ;     
-    MOVE.B  #A_, (A5)+  ;   
-    BSR put_number  ;   
+    MOVE.B  #Open_paren, (A5)+  ; put (An) with number  
+    MOVE.B  #A_, (A5)+          ;   
+    BSR put_number              ;   
     MOVE.B  #Close_paren, (A5)+ ;   
     
-    BRA move_w_dest ;   
+    BRA move_w_dest             ;   
 
-move_w_addr_reg_plus    ;   
+move_w_addr_reg_plus            ; put (An)+ with number   
     MOVE.B  #Open_paren, (A5)+  ;     
-    MOVE.B  #A_, (A5)+  ;   
-    BSR put_number  ;   
+    MOVE.B  #A_, (A5)+          ;   
+    BSR put_number              ;   
     MOVE.B  #Close_paren, (A5)+ ;  
-    MOVE.B  #PLUS, (A5)+    ;   
-    BRA move_w_dest ;
+    MOVE.B  #PLUS, (A5)+        ;   
+    BRA move_w_dest             ;
 
-move_w_addr_reg_minus   ;
-    MOVE.B  #MINUS, (A5)+   ;   
+move_w_addr_reg_minus           ;
+    MOVE.B  #MINUS, (A5)+       ; put -(An) with number    
     MOVE.B  #Open_paren, (A5)+  ;     
-    MOVE.B  #A_, (A5)+  ;   
-    BSR put_number  ;   
+    MOVE.B  #A_, (A5)+          ;   
+    BSR put_number              ;   
     MOVE.B  #Close_paren, (A5)+ ;  
 
-    BRA move_w_dest ;
+    BRA move_w_dest             ;
 
-move_w_ea_im    ;
-    CMPI.W  #$0000, D0  ;   
-    BEQ move_w_src_word ;   
+move_w_ea_im                    ;
+    CMPI.W  #$0000, D0          ; check if register == 0     
+    BEQ move_w_src_word         ;   
     
-    CMPI.W  #$0001, D0  ;   
-    BEQ move_w_src_long ;   
+    CMPI.W  #$0001, D0          ; check if register == 1    
+    BEQ move_w_src_long         ;   
     
-    CMPI.W  #$0004, D0  ;   
-    BEQ move_w_src_imm  ;   
+    CMPI.W  #$0004, D0          ; check if register == 4       
+    BEQ move_w_src_imm          ;   
     
-    MOVEM.L (A7)+, A5   ;   
-    BRA invalid_code    ;   
+    MOVEM.L (A7)+, A5           ; otherwise return invalid message  
+    BRA invalid_code            ;   
 
 move_w_src_word 
-    MOVE.B  #DOLLAR, (A5)+  ;   
-    MOVEA.W (A2)+, A6      ;   
-    MOVE.W  #word, D1   ;   
-    MOVEM.L D5/A0, -(A7)  
-    BSR hex_to_string   ;   
-    MOVEM.L (A7)+, D5/A0   ;
+    MOVE.B  #DOLLAR, (A5)+      ;   
+    MOVEA.W (A2)+, A6           ;   
+    MOVE.W  #word, D1           ; read more opcode wordsize 
+    MOVEM.L D5/A0, -(A7)        ; 
+    BSR hex_to_string           ;   
+    MOVEM.L (A7)+, D5/A0        ;
     
     BRA move_w_dest 
 move_w_src_long
-    MOVE.B  #DOLLAR, (A5)+  ;   
-    MOVEA.L (A2)+, A6      ;   
-    MOVE.W  #long, D1   ;   
-    MOVEM.L D5/A0, -(A7)  
-    BSR hex_to_string   ;   
-    MOVEM.L (A7)+, D5/A0   ;
+    MOVE.B  #DOLLAR, (A5)+      ;   
+    MOVEA.L (A2)+, A6           ; read more opcode longsize   
+    MOVE.W  #long, D1           ;   
+    MOVEM.L D5/A0, -(A7)        ;
+    BSR hex_to_string           ;   
+    MOVEM.L (A7)+, D5/A0        ;
     
-    BRA move_w_dest ;   
+    BRA move_w_dest             ;   
     
 move_w_src_imm      
-    MOVE.B  #SHARP, (A5)+   ;   
-    MOVE.B  #DOLLAR, (A5)+ ; 
-    MOVEA.W (A2)+, A6      ;   
-    MOVE.W  #word, D1   ;   
-    MOVEM.L D5/A0, -(A7)  
-    BSR hex_to_string   ;   
-    MOVEM.L (A7)+, D5/A0   ;
+    MOVE.B  #SHARP, (A5)+       ;   
+    MOVE.B  #DOLLAR, (A5)+      ; 
+    MOVEA.W (A2)+, A6           ; read more opcode word size       
+    MOVE.W  #word, D1           ;   
+    MOVEM.L D5/A0, -(A7)        ;  
+    BSR hex_to_string           ;   
+    MOVEM.L (A7)+, D5/A0        ;
     
-    BRA move_w_dest ;
+    BRA move_w_dest             ;
 
 move_w_dest
     MOVE.B  #COMMA, (A5)+   ;   
@@ -1863,83 +1863,83 @@ move_w_dest
     BSR get_bit         ;   D0 contains register of dest    
     
     * now D1 has dest mode, D0 has dest register number 
-    CMPI.W  #$0000, D1  ;   
+    CMPI.W  #$0000, D1          ;   if mode == 0    
     BEQ dest_move_w_Data_reg ;    
 
-    CMPI.W  #$0002, D1  ;   
+    CMPI.W  #$0002, D1          ;   if mode == 2    
     BEQ dest_move_w_Addr_reg_paren ;   
 
-    CMPI.W  #$0003, D1  ;   
+    CMPI.W  #$0003, D1          ;   if mode == 3    
     BEQ dest_move_w_Addr_reg_plus    ;   
 
-    CMPI.W  #$0004, D1  ;   
+    CMPI.W  #$0004, D1          ;   if mode == 4    
     BEQ dest_move_w_Addr_reg_minus   ;   
 
-    CMPI.W  #$0007, D1  ;   
-    BEQ dest_move_w_ea   ;   
+    CMPI.W  #$0007, D1          ;   if mode == 7    
+    BEQ dest_move_w_ea          ;   
     
-    MOVEM.L (A7)+, A5   ;   
-    BRA invalid_code    
+    MOVEM.L (A7)+, A5           ;   
+    BRA invalid_code            ; 
 
 dest_move_w_Data_reg 
-    MOVE.B  #D_, (A5)+  ;
-    BSR put_number  ;   
+    MOVE.B  #D_, (A5)+          ; put Dn with number 
+    BSR put_number              ;   
     
-    BRA move_w_done  ;     
+    BRA move_w_done             ;     
 
 dest_move_w_Addr_reg_paren   
-    MOVE.B  #Open_paren, (A5)+  ;     
-    MOVE.B  #A_, (A5)+  ;   
-    BSR put_number  ;   
+    MOVE.B  #Open_paren, (A5)+  ; put (An) with number   
+    MOVE.B  #A_, (A5)+          ;   
+    BSR put_number              ;   
     MOVE.B  #Close_paren, (A5)+ ;   
     
-    BRA move_w_done ;   
+    BRA move_w_done             ;   
 
-dest_move_w_addr_reg_plus    ;   
-    MOVE.B  #Open_paren, (A5)+  ;     
-    MOVE.B  #A_, (A5)+  ;   
-    BSR put_number  ;   
+dest_move_w_addr_reg_plus       ;   
+    MOVE.B  #Open_paren, (A5)+  ; put (An)+ with number      
+    MOVE.B  #A_, (A5)+          ;   
+    BSR put_number              ;   
     MOVE.B  #Close_paren, (A5)+ ;  
-    MOVE.B  #PLUS, (A5)+    ;   
-    BRA move_w_done ;
+    MOVE.B  #PLUS, (A5)+        ;   
+    BRA move_w_done             ;
 
-dest_move_w_addr_reg_minus   ;
-    MOVE.B  #MINUS, (A5)+   ;   
+dest_move_w_addr_reg_minus      ;
+    MOVE.B  #MINUS, (A5)+       ; put -(An) with number    
     MOVE.B  #Open_paren, (A5)+  ;     
-    MOVE.B  #A_, (A5)+  ;   
-    BSR put_number  ;   
+    MOVE.B  #A_, (A5)+          ;   
+    BSR put_number              ;   
     MOVE.B  #Close_paren, (A5)+ ;  
 
-    BRA move_w_done ;
+    BRA move_w_done             ;
 
-dest_move_w_ea    ;
-    CMPI.W  #$0000, D0  ;   
-    BEQ dest_move_w_src_word ;   
+dest_move_w_ea                  
+    CMPI.W  #$0000, D0          ; check if register == 0    
+    BEQ dest_move_w_src_word    ;   
     
-    CMPI.W  #$0001, D0  ;   
-    BEQ dest_move_w_src_long ;   
+    CMPI.W  #$0001, D0          ; check if register == 1    
+    BEQ dest_move_w_src_long    ;   
     
-    MOVEM.L (A7)+, A5   ;   
-    BRA invalid_code    ;   
+    MOVEM.L (A7)+, A5           ;   
+    BRA invalid_code            ; otherwise print invalid mode     
 
 dest_move_w_src_word 
-    MOVE.B  #DOLLAR, (A5)+  ;   
-    MOVEA.W (A2)+, A6      ;   
-    MOVE.W  #word, D1   ;   
-    MOVEM.L D5/A0, -(A7)  
-    BSR hex_to_string   ;   
-    MOVEM.L (A7)+, D5/A0   ;
+    MOVE.B  #DOLLAR, (A5)+      ; 
+    MOVEA.W (A2)+, A6           ; read word size opcode more      
+    MOVE.W  #word, D1           ;   
+    MOVEM.L D5/A0, -(A7)        ;  
+    BSR hex_to_string           ; put address in the temp message     
+    MOVEM.L (A7)+, D5/A0        ;
     
-    BRA move_w_done 
+    BRA move_w_done             ;
 dest_move_w_src_long
-    MOVE.B  #DOLLAR, (A5)+  ;   
-    MOVEA.L (A2)+, A6      ;   
-    MOVE.W  #long, D1   ;   
-    MOVEM.L D5/A0, -(A7)  
-    BSR hex_to_string   ;   
-    MOVEM.L (A7)+, D5/A0   ;
+    MOVE.B  #DOLLAR, (A5)+      ;   
+    MOVEA.L (A2)+, A6           ; read long size opcode more       
+    MOVE.W  #long, D1           ;   
+    MOVEM.L D5/A0, -(A7)        ;  
+    BSR hex_to_string           ; put address in the temp message   
+    MOVEM.L (A7)+, D5/A0        ;
     
-    BRA move_w_done ;   
+    BRA move_w_done             ;   
     
 move_w_done 
     
@@ -1996,9 +1996,6 @@ getEA
     MOVE.W  #$0007, D6      ;   mask for last three bits
     MOVE.W  #0, D7          ;   no shift needed
     BSR get_bit             ;   get register bits in d0
-    
-*************************This section is same as ori section. Code is below for debugging and understanding purposes*******
-*************************Will get rid and most likely refer to existing functions in ORI once done testing.****************
 
     CMPI.W  #$00, D1        ;   check if mode bits are 000 
     BEQ neg_Data_reg        ;   branch to (Dn)
@@ -2053,32 +2050,31 @@ neg_Addr_paren_minus
 neg_ea  
     MOVE.B  #DOLLAR, (A5)+      ;   Add '$'
     CMPI.W  #$00, D0            ;   Check if is word
-    BEQ neg_word_ea                 ;   branch if word
+    BEQ neg_word_ea             ;   branch if word
     
     CMPI.W  #$01, D0            ;   check if is long
-    BEQ neg_long_ea                 ;   branch if long
+    BEQ neg_long_ea             ;   branch if long
 
     MOVEM.L (A7)+, A5           ;   restore A5 from stack
     BRA invalid_code            ;   code is invalid
     
-**********This is same as method used for ORI. I don't understand so I will ask you guys about how this works************
 neg_word_ea      
-    MOVEA.W (A2)+, A6      ;   
-    MOVE.W  #word, D1   ;   
+    MOVEA.W (A2)+, A6           ;   
+    MOVE.W  #word, D1           ;   
     MOVEM.L A0, -(A7)  
-    BSR hex_to_string   ;   
-    MOVEM.L (A7)+, A0  ;
+    BSR hex_to_string           ;   
+    MOVEM.L (A7)+, A0           ;
     
-    BRA ori_done        ;   
+    BRA ori_done                ;   
 
 neg_long_ea                
-    MOVEA.L (A2)+, A6      ;   
-    MOVE.W  #long, D1   ;   
+    MOVEA.L (A2)+, A6           ;   
+    MOVE.W  #long, D1           ;   
     MOVEM.L A0, -(A7)  
-    BSR hex_to_string   ;   
-    MOVEM.L (A7)+, A0  ;
+    BSR hex_to_string           ;   
+    MOVEM.L (A7)+, A0           ;
     
-    BRA ori_done    ;   
+    BRA ori_done                ;   
 ***************************END OF NEG***********************************
 MOVEM_W_L_RtoM
     MOVEM.L A5, -(A7)   ;   save A5 in the stack (pointer to result message)  
@@ -2099,29 +2095,179 @@ MOVEM_W_L_RtoM
     BSR get_bit             ;   get this bit in d0
     
     CMPI.W  #$00, D0
-    BRA movem_w
+    BEQ movem_w_RtM
     CMPI.W  #$01, D0
-    BRA movem_l
+    BEQ movem_l_RtM
     
+movem_invalid
     MOVEM.L (A7)+, A5       ;   Restore A5  from the stack  
     BRA invalid_code        ;   invalid code 
 
-movem_w
+movem_w_RtM
     MOVE.B  #W_, (A5)+
     MOVE.B  #TAB, (A5)+
+    BRA movem_RtM
     
-movem_l
+movem_l_RtM
     MOVE.B  #L_, (A5)+
     MOVE.B  #TAB, (A5)+
+    BRA movem_RtM
+
+movem_RtM
+****Validation****
+    MOVE.W (A2)+, D4       ;   move register list mask into d4 
+    CMPI.W  #$00, D4        ;   validate that D4 is not all 0s
+    BEQ movem_invalid
+***Check if EA mode is predecrement***
+    MOVE.W  D5, D0          ;   move opcode into d0
+    MOVE.W  #$0038, D6      ;   bitmask to get mode bits
+    MOVE.B  #3, D7          ;   number to shift after masking
+    BSR get_bit             ;   get these bits in d0
     
-********QUESTIONS ON THIS, UNSURE HOW TO PROCEED******
-   * 
+    CMPI.W  #$04, D0        ;   check if mode bits are 100 -(An)
+    BEQ movem_predec        ;   branch to predec mode for reg list mas
+    
+    MOVE.B  #0, D1          ;   set D1 to 0 (acts as counter)
+    
+rlm_dn_loop
+    CMPI.W  #8, D1          ;   check counter
+    BEQ rlm_an_loop         ;   if 8, move to an loop (bits 8-15)
+    BSR get_lsb             ;   get lsb in D0
+    CMPI.W  #1, D0          ;   if bit == 1, branch to add to list 
+    BEQ add_reg             ;   add to list
+    ADDI.B  #1, D1          ;   increment ctr
+    LSR.W   #1, D4          ;   shift D4 right to get next lsb
+    BRA rlm_dn_loop         ;   continue loop
+    
    
-    *This is in RtoM format (register to mem)
+add_reg
+    MOVE.B  D1, D0          ;   move counter into d0
+    MOVE.B  #D_, (A5)+      ;   add 'D' to result msg
+    BSR put_number          ;   add reg num (counter) to result msg
+    ADDI.B  #1, D1          ;   add 1 to counter
+    LSR.W   #1, D4          ;   
+    CMPI.B  #$00, D4        ;   if rest is 0, no need to continue
+    BEQ RtoM_EA
+    MOVE.B  #SLASH, (A5)+   ;   add '/' to result
+    BRA rlm_dn_loop         ;   continue loop
+    
+    
+rlm_an_loop
+    MOVE.B  #0, D1          ;   reset counter
+an_loop
+    CMPI.W  #8, D1          ;   check counter
+    BEQ RtoM_EA             ;   if 0, move to EA
+    BSR get_lsb             ;   get lsb in D0
+    CMPI.W  #1, D0          ;   if bit == 1, branch to add to list 
+    BEQ add_an_reg          ;   add to list
+    ADDI.B  #1, D1          ;   increment ctr
+    LSR.W   #1, D4          ;   shift D4 right to get next lsb
+    BRA an_loop             ;   continue loop
+    
+   
+add_an_reg
+    MOVE.B  D1, D0          ;   move counter into d0
+    MOVE.B  #A_, (A5)+      ;   add 'A' to result msg
+    BSR put_number          ;   add reg num (counter) to result msg
+    ADDI.B  #1, D1          ;   add 1 to counter
+    LSR.W   #1, D4          ;   shift right for next lsb
+    CMPI.B  #$0000, D4        ;   if rest is 0 no need to continue
+    BEQ RtoM_EA
+    MOVE.B  #SLASH, (A5)+   ;   add '/' to result
+    BRA an_loop             ;   continue loop
+
+get_lsb
+    MOVE.W  D4, D0          ;   move reg list mask into d0
+    MOVE.W  #$0001, D6      ;   bitmask to get ls bit
+    MOVE.B  #0, D7          ;   number to shift after masking (none needed)
+    BSR get_bit             ;   get this bit in d0
+    RTS
+
+RtoM_EA
+    MOVE.B  #COMMA, (A5)+
+    MOVE.B  #SPACE, (A5)+
+    
+    MOVE.W  D5, D0          ;   move opcode into d0
+    MOVE.W  #$0038, D6      ;   bitmask to get mode bits
+    MOVE.B  #3, D7          ;   number to shift after masking
+    BSR get_bit             ;   get these bits in d0
+    MOVE.W  D0, D1          ;   move mode bits into d1
+    
+    MOVE.W  D5, D0          ;   move the opcode into d0 again
+    MOVE.W  #$0007, D6      ;   mask for last three bits
+    MOVE.W  #0, D7          ;   no shift needed
+    BSR get_bit             ;   get register bits in d0
+    
+    CMPI.W  #$02, D1        ;   check if mode bits are 010
+    BEQ neg_Addr_paren      ;   branch to add (An)   
+    
+    CMPI.W  #$04, D1        ;   check if mode bits are 100
+    BEQ neg_Addr_paren_minus   ;    branch to add -(An)
+
+    CMPI.w  #$07, D1        ;   Check if mode bits are 111
+    BEQ neg_ea              ;   branch to check if W or L
+    
+    MOVEM.L (A7)+, A5       ;   Restore A5  from the stack  
+    BRA invalid_code        ;   invalid code 
+    
+******this mode works only for predecrement (RtM)
+movem_predec
+    MOVE.B  #8, D1          ;   set counter
+RtM_predec_loop
+    CMPI.B  #0, D1          ;   check counter
+    BEQ RtM_dn_predec       ;   if 0, move to Dn loop (bits 8-15)
+    BSR get_lsb             ;   get lsb in D0
+    CMPI.B  #1, D0          ;   if bit == 1, branch to add to list 
+    BEQ add_an_reg_predec   ;   add to list
+    LSR.W   #1, D4          ;   shift right for next lsb
+    SUBI.B  #1, D1          ;   decrement ctr
+    BRA RtM_predec_loop     ;   continue loop
+    
+   
+add_an_reg_predec
+    SUBI.B   #1, D1         ;   subtract 1 from counter
+    MOVE.B  D1, D0          ;   move counter into d0
+    MOVE.B  #A_, (A5)+      ;   add 'A' to result msg
+    BSR put_number          ;   add reg num (counter) to result msg
+    LSR.W   #1, D4          ;   shift D4 right to prep for next lsb
+    CMPI.W  #$0000, D4      ;   if the rest of D4 is 0, move on. No slash needed
+    BEQ RtM_dn_predec
+    MOVE.B  #SLASH, (A5)+   ;   add '/' to result
+    
+    BRA RtM_predec_loop         ;   continue loop
+    
+    
+RtM_dn_predec
+    MOVE.B  #8, D1          ;   reset counter
+RtM_dn_loop
+    CMPI.B  #0, D1          ;   check counter
+    BEQ RtoM_EA             ;   if 0, get EA
+    BSR get_lsb             ;   get lsb in D0
+    CMPI.B  #1, D0          ;   if bit == 1, branch to add to list 
+    BEQ add_dn_reg_RtM      ;   add to list
+    LSR.W   #1, D4          ;   shift right for next lsb
+    SUBI.B  #1, D1          ;   decrement ctr
+    BRA RtM_dn_loop         ;   continue loop
+    
+   
+add_dn_reg_RtM
+    SUBI.B  #1, D1          ;   decrement counter
+    MOVE.B  D1, D0          ;   move counter into d0
+    MOVE.B  #D_, (A5)+      ;   add 'D' to result msg
+    BSR put_number          ;   add reg num (counter) to result msg
+    LSR.W   #1, D4          ;   shift D4 right to get next lsb
+    CMPI.W  #$0000, D4      ;   if rest is 0, get EA
+    BEQ RtoM_EA
+    MOVE.B  #SLASH, (A5)+   ;   add '/' to result
+    
+    BRA RtM_dn_loop         ;   continue loop
+
+  
+**********************END OF RtM***********************
 MULS_DIVS_L_MOVEM_W_L_MtoR  
-    MOVEM.L A5, -(A7)   ;   save A5 in the stack (pointer to result message)  
-    MOVEA.L A6, A0      ;   starting address of temp      
-    MOVEA.L A6, A5      ;   move starting address of curent temp Message
+    MOVEM.L A5, -(A7)       ;   save A5 in the stack (pointer to result message)  
+    MOVEA.L A6, A0          ;   starting address of temp      
+    MOVEA.L A6, A5          ;   move starting address of curent temp Message
     
     MOVE.W  D5, D0          ;   move opcode into d0
     MOVE.W  #$00C0, D6      ;   bitmask to get bits 6,7
@@ -2143,6 +2289,186 @@ muls_l
     MOVE.B  #PERIOD, (A5)+
     MOVE.B  #L_, (A5)+
     
+    BSR muls_l_EA
+    BRA check_muls
+    
+muls_l_EA
+    MOVE.W  D5, D0          ;   move opcode into d0
+    MOVE.W  #$0038, D6      ;   bitmask to get mode bits
+    MOVE.B  #3, D7          ;   number to shift after masking
+    BSR get_bit             ;   get these bits in d0
+    MOVE.W  D0, D1          ;   move mode bits into d1
+    
+    MOVE.W  D5, D0          ;   move the opcode into d0 again
+    MOVE.W  #$0007, D6      ;   mask for last three bits
+    MOVE.W  #0, D7          ;   no shift needed
+    BSR get_bit             ;   get register bits in d0
+
+    CMPI.W  #$00, D1        ;   check if mode bits are 000 
+    BEQ muls_Data_reg        ;   branch to (Dn)
+    
+    CMPI.W  #$02, D1        ;   check if mode bits are 010
+    BEQ muls_Addr_paren      ;   branch to add (An)   
+    
+    CMPI.W  #$03, D1        ;   check if mode bits are 011
+    BEQ muls_Addr_paren_plus ;   branch to add (An)+
+    
+    CMPI.W  #$04, D1        ;   check if mode bits are 100
+    BEQ muls_Addr_paren_minus   ;    branch to add -(An)
+
+    CMPI.w  #$07, D1        ;   Check if mode bits are 111
+    BEQ muls_ea              ;   branch to check if W or L or data
+    
+    MOVEM.L (A7)+, A5       ;   Restore A5  from the stack  
+    BRA invalid_code        ;   invalid code 
+    
+muls_Data_reg
+    MOVE.B  #D_, (A5)+      ;   move 'D' to result 
+    BSR put_number          ;   put register number (in D0) 
+
+    MOVE.B  #COMMA, (A5)+
+    MOVE.B  #SPACE, (A5)+
+    RTS
+
+muls_Addr_paren
+    MOVE.B  #Open_paren, (A5)+  ;   Add '('
+    MOVE.B  #A_, (A5)+          ;   Add 'A'
+    BSR put_number              ;   Add register num (from d0)   
+  
+    MOVE.B  #Close_paren, (A5)+ ;   Add ')'
+    MOVE.B  #COMMA, (A5)+
+    MOVE.B  #SPACE, (A5)+
+    RTS
+
+muls_Addr_paren_plus
+    MOVE.B  #Open_paren, (A5)+  ;   Add '(' 
+    MOVE.B  #A_, (A5)+          ;   Add 'A'
+    BSR put_number              ;   Add register num (from d0)
+    MOVE.B  #Close_paren, (A5)+ ;   Add ')'
+    MOVE.B  #PLUS, (A5)+        ;   Add '+'
+        
+    MOVE.B  #COMMA, (A5)+
+    MOVE.B  #SPACE, (A5)+
+    RTS
+  
+muls_Addr_paren_minus
+    MOVE.B  #MINUS, (A5)+       ;   Add '-'  
+    MOVE.B  #Open_paren, (A5)+  ;   Add '('
+    MOVE.B  #A_, (A5)+          ;   Add 'A'
+    BSR put_number              ;   Add register num (from d0)    
+    MOVE.B  #Close_paren, (A5)+ ;   Add ')'
+    
+    MOVE.B  #COMMA, (A5)+
+    MOVE.B  #SPACE, (A5)+
+    RTS
+    
+muls_ea  
+    MOVE.B  #DOLLAR, (A5)+      ;   Add '$'
+    CMPI.W  #$00, D0            ;   Check if is word
+    BEQ muls_word_ea             ;   branch if word
+    
+    CMPI.W  #$01, D0            ;   check if is long
+    BEQ muls_long_ea             ;   branch if long
+    
+    CMPI.W  #$03, D0
+    BEQ muls_data_ea
+
+    MOVEM.L (A7)+, A5           ;   restore A5 from stack
+    BRA invalid_code            ;   code is invalid
+    
+muls_word_ea      
+    MOVEA.W (A2)+, A6      ;   
+    MOVE.W  #word, D1   ;   
+    MOVEM.L A0, -(A7)  
+    BSR hex_to_string   ;   
+    MOVEM.L (A7)+, A0  ;
+    
+    MOVE.B  #COMMA, (A5)+
+    MOVE.B  #SPACE, (A5)+
+    RTS 
+
+muls_long_ea                
+    MOVEA.L (A2)+, A6      ;   
+    MOVE.W  #long, D1   ;   
+    MOVEM.L A0, -(A7)  
+    BSR hex_to_string   ;   
+    MOVEM.L (A7)+, A0  ;
+    
+    MOVE.B  #COMMA, (A5)+
+    MOVE.B  #SPACE, (A5)+
+    RTS
+    
+muls_data_ea
+    MOVE.B  #SHARP, (A5)+   ;   
+    MOVE.B  #DOLLAR, (A5)+ ; 
+    MOVEA.W (A2)+, A6      ;   
+    MOVE.W  #word, D1   ;   
+    MOVEM.L D5/A0, -(A7)  
+    BSR hex_to_string   ; 
+    MOVEM.L (A7)+, D5/A0   ;  
+    
+    MOVE.B  #COMMA, (A5)+
+    MOVE.B  #SPACE, (A5)+
+    RTS
+
+********END OF EA FOR MULS (also used for divs)*******
+check_muls
+**VALIDATE FORMAT**
+    MOVE.W (A2)+, D4        ;   move next 16 bits into d4              ***************************************************************************************************************
+    CMPI.W  #$00, D4        ;   validate that D4 is not all 0s
+    BEQ movem_invalid       ;   invalid if true
+    
+    MOVE.W  D4, D0          ;   move next 16 bits into d0
+    MOVE.W  #$0800, D6      ;   bitmask to check bit 11- needs to be 1
+    MOVE.B  #11, D7         ;   number to shift after masking
+    BSR get_bit             ;   get this bit in d0
+    
+    CMPI.W  #$01, D0        ;   compare result with necessary format (bit 11 = 1)
+    BNE movem_invalid       ;   if not equal, invalid code
+    
+    MOVE.W  D4, D0          ;   move bits into d0
+    MOVE.W  #$0400, D6      ;   bitmask to get bit 10
+    MOVE.B  #10, D7         ;   number to shift after masking
+    BSR get_bit             ;   get this bit in d0
+    
+    CMPI.B  #$00, D0        ;   check size bit
+    BEQ one_reg_muls
+    CMPI.B  #$01, D0        ;   check size bit
+    BEQ range_reg_muls
+    
+    BRA movem_invalid       ;   if somehow doesn't get branched- invalid code
+    
+one_reg_muls
+    MOVE.W  D4, D0          ;   move next 16 bits into d0
+    MOVE.W  #$0700, D6      ;   bitmask to check bits 12-14 (register)
+    MOVE.B  #12, D7         ;   number to shift after masking
+    BSR get_bit             ;   get this bits in d0
+    
+    MOVE.B  #D_, (A5)+
+    BSR put_number          ;   add data register
+    BRA ori_done            ;   finished
+    
+range_reg_muls
+    MOVE.W  D4, D0          ;   move next 16 bits into d0
+    MOVE.W  #$0700, D6      ;   bitmask to check bits 12-14 (register)
+    MOVE.B  #12, D7         ;   number to shift after masking
+    BSR get_bit             ;   get this bits in d0
+    
+    MOVE.B  #D_, (A5)+
+    BSR put_number          ;   add data register
+    
+    MOVE.W  D4, D0          ;   move next 16 bits into d0
+    MOVE.W  #$0007, D6      ;   bitmask to check bits 0-2 (register 2)
+    MOVE.B  #0, D7          ;   number to shift after masking
+    BSR get_bit             ;   get this bits in d0
+    
+    MOVE.B  #DASH, (A5)+
+    MOVE.B  #D_, (A5)+
+    BSR put_number
+    
+    BRA ori_done            ;   finished
+***********END OF MULS.L*****************
+
 divs_l
     MOVE.B  #D_, (A5)+
     MOVE.B  #I_, (A5)+
@@ -2150,6 +2476,67 @@ divs_l
     MOVE.B  #S_, (A5)+
     MOVE.B  #PERIOD, (A5)+
     MOVE.B  #L_, (A5)+
+    
+    BSR muls_l_EA
+    BRA check_divs
+    
+check_divs
+**VALIDATE FORMAT**
+    MOVE.W (A2)+, D4        ;   move next 16 bits into d4              ***************************************************************************************************************
+    CMPI.W  #$00, D4        ;   validate that D4 is not all 0s
+    BEQ movem_invalid       ;   invalid if true
+    
+    MOVE.W  D4, D0          ;   move next 16 bits into d0
+    MOVE.W  #$0800, D6      ;   bitmask to check bit 11- needs to be 1
+    MOVE.B  #11, D7         ;   number to shift after masking
+    BSR get_bit             ;   get this bit in d0
+    
+    CMPI.W  #$01, D0        ;   compare result with necessary format (bit 11 = 1)
+    BNE movem_invalid       ;   if not equal, invalid code
+    
+    MOVE.W  D4, D0          ;   move bits into d0
+    MOVE.W  #$0400, D6      ;   bitmask to get bit 10
+    MOVE.B  #10, D7         ;   number to shift after masking
+    BSR get_bit             ;   get this bit in d0
+    
+    CMPI.B  #$00, D0        ;   check size bit
+    BEQ one_reg_divs
+    CMPI.B  #$01, D0        ;   check size bit
+    BEQ range_reg_divs
+    
+    BRA movem_invalid       ;   if somehow doesn't get branched- invalid code
+    
+one_reg_divs
+    MOVE.W  D4, D0          ;   move next 16 bits into d0
+    MOVE.W  #$0700, D6      ;   bitmask to check bits 12-14 (register)
+    MOVE.B  #12, D7         ;   number to shift after masking
+    BSR get_bit             ;   get this bits in d0
+    
+    MOVE.B  #D_, (A5)+
+    BSR put_number          ;   add data register
+    BRA ori_done            ;   finished
+    
+range_reg_divs
+    MOVE.W  D4, D0          ;   move next 16 bits into d0
+    MOVE.W  #$0700, D6      ;   bitmask to check bits 12-14 (register)
+    MOVE.B  #12, D7         ;   number to shift after masking
+    BSR get_bit             ;   get this bits in d0
+    
+    MOVE.B  #D_, (A5)+
+    BSR put_number          ;   add data register
+    
+    MOVE.W  D4, D0          ;   move next 16 bits into d0
+    MOVE.W  #$0007, D6      ;   bitmask to check bits 0-2 (register 2)
+    MOVE.B  #0, D7          ;   number to shift after masking
+    BSR get_bit             ;   get this bits in d0
+    
+    MOVE.B  #COLON, (A5)+
+    MOVE.B  #D_, (A5)+
+    BSR put_number
+    
+    BRA ori_done            ;   finished
+    
+*********END OF DIVS.l***************************************
     
 movem_w_l_mtr
     MOVE.B  #M_, (A5)+
@@ -2164,17 +2551,153 @@ movem_w_l_mtr
     CMPI.W  #$03, D0
     BEQ movem_l_mtr
     
-****following is unecessary but here for precaution****
     MOVEM.L (A7)+, A5           ;   restore A5 from stack
     BRA invalid_code            ;   code is invalid
     
 movem_w_mtr
     MOVE.B  #W_, (A5)+
     MOVE.B  #TAB, (A5)+
-*************CODE NEEDED******
+    BRA movem_MtR
+    
 movem_l_mtr
     MOVE.B  #L_, (A5)+
     MOVE.B  #TAB, (A5)+
+    BRA movem_MtR
+    
+movem_MtR
+    MOVE.W (A2)+, D4        ;   move register list mask into d4              ***************************************************************************************************************
+    CMPI.W  #$0000, D4        ;   validate that D4 is not all 0s
+    BEQ movem_invalid
+ 
+MtR_movem_EA 
+    MOVE.W  D5, D0          ;   move opcode into d0
+    MOVE.W  #$0038, D6      ;   bitmask to get mode bits
+    MOVE.B  #3, D7          ;   number to shift after masking
+    BSR get_bit             ;   get these bits in d0
+    MOVE.W  D0, D1          ;   move mode bits into d1
+    
+    MOVE.W  D5, D0          ;   move the opcode into d0 again
+    MOVE.W  #$0007, D6      ;   mask for last three bits
+    MOVE.W  #0, D7          ;   no shift needed
+    BSR get_bit             ;   get register bits in d0
+    
+    CMPI.W  #$02, D1        ;   check if mode bits are 010
+    BEQ MtR_Addr_paren      ;   branch to add (An)   
+    
+    CMPI.W  #$03, D1        ;   check if mode bits are 011
+    BEQ MtR_Addr_paren_plus ;   branch to add (An)+
+
+    CMPI.W  #$07, D1        ;   Check if mode bits are 111
+    BEQ MtR_ea              ;   branch to check if W or L
+    
+    MOVEM.L (A7)+, A5       ;   Restore A5  from the stack  
+    BRA invalid_code        ;   invalid code 
+
+MtR_Addr_paren
+    MOVE.B  #Open_paren, (A5)+  ;   Add '('
+    MOVE.B  #A_, (A5)+          ;   Add 'A'
+    BSR put_number              ;   Add register num (from d0)   
+    MOVE.B  #Close_paren, (A5)+ ;   Add ')'
+    
+    MOVE.B  #COMMA, (A5)+
+    MOVE.B  #SPACE, (A5)+
+    MOVE.B  #0, D1              ;  set counter 
+    BRA MtR_dn_loop             ;  branch to loop for list of registers
+
+MtR_Addr_paren_plus
+    MOVE.B  #Open_paren, (A5)+  ;   Add '(' 
+    MOVE.B  #A_, (A5)+          ;   Add 'A'
+    BSR put_number              ;   Add register num (from d0)
+    MOVE.B  #Close_paren, (A5)+ ;   Add ')'
+    MOVE.B  #PLUS, (A5)+        ;   Add '+'
+        
+    MOVE.B  #COMMA, (A5)+
+    MOVE.B  #SPACE, (A5)+
+    MOVE.B  #0, D1              ;  set counter 
+    BRA MtR_dn_loop             ;  branch to loop for list of registers
+    
+MtR_ea 
+    MOVE.B  #DOLLAR, (A5)+      ;   Add '$'
+    CMPI.W  #$00, D0            ;   Check if is word
+    BEQ MtR_word_ea             ;   branch if word
+    
+    CMPI.W  #$01, D0            ;   check if is long
+    BEQ MtR_long_ea             ;   branch if long
+
+    MOVEM.L (A7)+, A5           ;   restore A5 from stack
+    BRA invalid_code            ;   code is invalid
+    
+MtR_word_ea      
+    MOVEA.W (A2)+, A6      ;   
+    MOVE.W  #word, D1   ;   
+    MOVEM.L A0, -(A7)  
+    BSR hex_to_string   ;   
+    MOVEM.L (A7)+, A0  ;
+    
+    MOVE.B  #COMMA, (A5)+
+    MOVE.B  #SPACE, (A5)+
+    MOVE.B  #0, D1              ;  set counter 
+    BRA MtR_dn_loop             ;  branch to loop for list of registers   
+
+MtR_long_ea                
+    MOVEA.L (A2)+, A6      ;   
+    MOVE.W  #long, D1   ;   
+    MOVEM.L A0, -(A7)  
+    BSR hex_to_string   ;   
+    MOVEM.L (A7)+, A0  ;
+    
+    MOVE.B  #COMMA, (A5)+
+    MOVE.B  #SPACE, (A5)+
+    MOVE.B  #0, D1              ;  set counter 
+    BRA MtR_dn_loop             ;  branch to loop for list of registers
+   
+************************************END of MtR EA********************************************
+MtR_dn_loop
+    CMPI.W  #8, D1          ;   check counter
+    BEQ MtR_an_loop         ;   if 8, move to an loop (bits 8-15)
+    BSR get_lsb             ;   get lsb in D0
+    CMPI.W  #1, D0          ;   if bit == 1, branch to add to list 
+    BEQ MtR_add_reg             ;   add to list
+    ADDI.B  #1, D1          ;   increment ctr
+    LSR.W   #1, D4          ;   shift D4 right to get next lsb
+    BRA MtR_dn_loop         ;   continue loop
+    
+   
+MtR_add_reg
+    MOVE.B  D1, D0          ;   move counter into d0
+    MOVE.B  #D_, (A5)+      ;   add 'D' to result msg
+    BSR put_number          ;   add reg num (counter) to result msg
+    ADDI.B  #1, D1          ;   add 1 to counter
+    LSR.W   #1, D4          ;   
+    CMPI.W  #$0000, D4      ;   if rest is 0, no need to continue
+    BEQ ori_done
+    MOVE.B  #SLASH, (A5)+   ;   add '/' to result
+    BRA MtR_dn_loop         ;   continue loop
+    
+    
+MtR_an_loop
+    MOVE.B  #0, D1          ;   reset counter
+an_loop_MtR
+    CMPI.W  #8, D1          ;   check counter
+    BEQ ori_done            ;   if 0, done
+    BSR get_lsb             ;   get lsb in D0
+    CMPI.W  #1, D0          ;   if bit == 1, branch to add to list 
+    BEQ add_an_reg_MtR          ;   add to list
+    ADDI.B  #1, D1          ;   increment ctr
+    LSR.W   #1, D4          ;   shift D4 right to get next lsb
+    BRA an_loop_MtR             ;   continue loop
+    
+   
+add_an_reg_MtR
+    MOVE.B  D1, D0          ;   move counter into d0
+    MOVE.B  #A_, (A5)+      ;   add 'A' to result msg
+    BSR put_number          ;   add reg num (counter) to result msg
+    ADDI.B  #1, D1          ;   add 1 to counter
+    LSR.W   #1, D4          ;   shift right for next lsb
+    CMPI.B  #$0000, D4        ;   if rest is 0 no need to continue
+    BEQ ori_done
+    MOVE.B  #SLASH, (A5)+   ;   add '/' to result
+    BRA an_loop_MtR             ;   continue loop
     
 **********JSR***********
 JSR_function    
@@ -2385,7 +2908,7 @@ get_subq_EA
     CMPI.W  #$04, D1        ;   check if mode bits are 100
     BEQ neg_Addr_paren_minus   ;    branch to add -(An)
 
-    CMPI.w  #$07, D1        ;   Check if mode bits are 000
+    CMPI.w  #$07, D1        ;   Check if mode bits are 111
     BEQ neg_ea              ;   branch to check if W or L
     
     MOVEM.L (A7)+, A5       ;   Restore A5  from the stack  
@@ -2423,37 +2946,34 @@ bra_check
     BRA bra_long        ;   go to long branch   
     
     * otherwise add current opcode number += D0 (8bit displacement) 
-    MOVE.W  A2, D1  ;   
-    SUBI.W  #4, D1  ;   
-    ADD.W   D1, D0  ;   opcode += 8bit displacement -> D0   ;   
+    MOVE.W  A2, D1  ;     
+    ADD.L   D1, D0  ;   opcode += 8bit displacement -> D0   ;   
     BRA bra_end ;   
     
     
 bra_word    
-    MOVE.W  A2, D1  ;   
-    SUBI.W  #4, D1  ;    
-    MOVE.W   (A2)+, D0   ;
-    ADD.L   D1, D0  ;   
+    MOVE.W  A2, D1          ;       
+    MOVE.W   (A2)+, D0      ;
+    ADD.L   D1, D0          ; Add displacement and current opcode address   
       
-    BRA bra_end ;   
+    BRA bra_end             ;   
 
 bra_long    
-    MOVE.W  A2, D1  ;   
-    SUBI.W  #4, D1  ;    
-    MOVE.L  (A2)+, D0   ;
-    ADD.L   D1, D0  ;   
+    MOVE.W  A2, D1          ;    
+    MOVE.L  (A2)+, D0       ;
+    ADD.L   D1, D0          ; Add displacement and current opcode address   
       
-    BRA bra_end ;   
+    BRA bra_end             ;   
 
 bra_end  
-    MOVE.B  #DOLLAR, (A5)+   ;      
-    MOVEA.L D0, A6      ;   
-    MOVE.W  #long, D1   ;   
-    MOVEM.L D5/A0, -(A7)  
-    BSR hex_to_string   ;   
-    MOVEM.L (A7)+, D5/A0   ;
+    MOVE.B  #DOLLAR, (A5)+  ;       
+    MOVEA.L D0, A6          ;   
+    MOVE.W  #long, D1       ;   
+    MOVEM.L D5/A0, -(A7)    ;  
+    BSR hex_to_string       ; put hex address of displacement + opcode into temp message       
+    MOVEM.L (A7)+, D5/A0    ;
 
-    BRA ori_done ;   
+    BRA ori_done            ;   
 
 BCC_function    
     MOVEM.L A5, -(A7)   ;   save A5 in the stack (pointer to result message)  
@@ -2565,7 +3085,7 @@ or
     MOVE.B  #O_, (A5)+
     MOVE.B  #R_, (A5)+
     
-    MOVE.W  D0, D2          ; copy the opmod into D2
+    MOVE.W  D0, D2          ;   copy the opmod into D2
     
     MOVE.W  D5, D0          ;   move opcode into d0
     MOVE.W  #$0E00, D6      ;   bitmask to get register bits
@@ -2603,14 +3123,27 @@ or
     CMPI.B  #6, D2  
     BEQ add_long_destEA
     
-*****end of or**** 
-divs_w
-    MOVE.B  #D_, (A5)+
-    MOVE.B  #I_, (A5)+
-    MOVE.B  #V_, (A5)+
-    MOVE.B  #S_, (A5)+
+    BRA add_invalid
     
+*****end of or****
+
+*DIVS.W and MULS.W are identical in structure except for their first four bits
+*This function reuses functions from muls.w 
+divs_w  
     MOVE.W  D0, D2          ;   copy the opmod into D2
+    
+    CMPI.B  #7, D2  
+    BEQ keep_DIVS_W
+    BRA invalid_code  
+
+keep_DIVS_W 
+    MOVE.B  #D_, (A5)+  
+    MOVE.B  #I_, (A5)+  
+    MOVE.B  #V_, (A5)+  
+    MOVE.B  #S_, (A5)+  
+    MOVE.B  #PERIOD, (A5)+  
+    MOVE.B  #W_, (A5)+
+    MOVE.B  #TAB, (A5)+  
     
     MOVE.W  D5, D0          ;   move opcode into d0
     MOVE.W  #$0E00, D6      ;   bitmask to get register bits
@@ -2629,12 +3162,8 @@ divs_w
     MOVE.W  #0, D7          ;   no shift needed
     BSR get_bit             ;   get EA register bits in d4
     MOVE.W  D0,D4           ;   move into d4
- 
-    *if EA mode is 001- An- invalid code
-    CMPI.B  #$01, D3
-    BEQ add_invalid 
     
-    BRA add_word_sourceEA
+    BRA MULS_W_ea            * branch to MULS function for EA and Dn
     
 * nine_start ***********************
 SUB_function    
@@ -3290,6 +3819,7 @@ MULS_W_long
     BRA MULS_W_done
 
 MULS_W_source_data  
+    MOVE.B  D1, D7
     MOVE.B  #SHARP, (A5)+   ;   
     MOVE.B  #DOLLAR, (A5)+ ; 
     MOVEA.W (A2)+, A6      ;   
@@ -3330,7 +3860,7 @@ message_out
 * D_start   ***********************
 ADD_ADDA    
     MOVEM.L A5, -(A7)     ;    save A5 in the stack (pointer to result message)  
-    MOVEA.L A6, A0      ;   starting address of temp      
+    MOVEA.L A6, A0          ;   starting address of temp      
     MOVEA.L A6, A5      ;   move starting address of curent temp Message into A0
     
     MOVE.W  D5, D0            * copy the original opcode into D0
@@ -3619,11 +4149,10 @@ add_source_data
     BRA add_invalid       
 
 add_source_data_byte
-    MOVE.B  D1, D7  
-    MOVE.B  #SHARP, (A5)+   ;   
-    MOVE.B  #DOLLAR, (A5)+ ; 
-    MOVEA.W (A2)+, A6      ;   
-
+    MOVE.B  D1, D7   
+    MOVE.B  #SHARP, (A5)+       ; read more opcode word size      
+    MOVE.B  #DOLLAR, (A5)+      ; 
+    MOVEA.W (A2)+, A6           ;   
     * check if first 8 bits are 0s  
     MOVE.L  A6, D1      ;   
     LSR.W   #8, D1      ;   shift right 8   
@@ -3632,10 +4161,11 @@ add_source_data_byte
     BRA ADD_invalid      
 
 ADD_source_valid
-    MOVE.B  #byte, D1   ;   
-    MOVEM.L D5/A0, -(A7)  
-    BSR hex_to_string   ; 
-    MOVEM.L (A7)+, D5/A0   ; 
+    MOVE.W  #byte, D1           ;   
+    MOVEM.L D5/A0, -(A7)        ;
+    BSR hex_to_string           ;   
+    MOVEM.L (A7)+, D5/A0        ;
+    
     MOVE.B  #COMMA, (A5)+   
     MOVE.B  #SPACE, (A5)+  
     MOVE.B  #D_, (A5)+  
@@ -3644,6 +4174,7 @@ ADD_source_valid
     BRA add_adda_done    
     
 add_source_data_word  
+    MOVE.B  D1, D7
     MOVE.B  #SHARP, (A5)+   ;   
     MOVE.B  #DOLLAR, (A5)+ ; 
     MOVEA.W (A2)+, A6      ;   
@@ -3661,6 +4192,7 @@ add_source_data_word
     BRA add_adda_done
  
 add_source_data_long     
+    MOVE.B  D1, D7
     MOVE.B  #SHARP, (A5)+   ;   
     MOVE.B  #DOLLAR, (A5)+ ; 
     MOVEA.W (A2)+, A6      ;   
@@ -3726,7 +4258,7 @@ add_dest_word_long
 
 add_dest_word
     MOVE.B  #D_,    (A5)+
-    MOVE.B  D7, D0  
+    MOVE.B  D1, D0  
     BSR put_number  
     MOVE.B  #COMMA, (A5)+
     MOVE.B  #SPACE, (A5)+       
@@ -3741,7 +4273,7 @@ add_dest_word
     
 add_dest_long
     MOVE.B  #D_, (A5)+  
-    MOVE.B  D7, D0  
+    MOVE.B  D1, D0  
     BSR put_number  
     MOVE.B  #COMMA, (A5)+   
     MOVE.B  #SPACE, (A5)+    
@@ -3753,7 +4285,7 @@ add_dest_long
     BSR hex_to_string     
     MOVEM.L (A7)+, A0   
     BRA add_adda_done
-     
+      
 adda_Dn
     MOVE.B  #D_, (A5)+
     MOVE.B  D4, D0
@@ -3839,7 +4371,9 @@ adda_word_ea
     MOVE.B  D7, D0  
     BSR put_number  
     MOVEM.L (A7)+, A0   
+        
     BRA add_adda_done      
+    
     
 adda_long_ea
     MOVE.B  D1, D7  
@@ -3856,41 +4390,39 @@ adda_long_ea
     MOVEM.L (A7)+, A0   
     BRA add_adda_done
     
-adda_source_data 
-    CMPI.B  #0, D2  
-    BEQ adda_source_data_byte    
-    CMPI.B  #1, D2  
+adda_source_data  
+    CMPI.B  #3, D2  
     BEQ adda_source_data_word    
-    CMPI.B  #2, D2  
+    CMPI.B  #7, D2  
     BEQ adda_source_data_long    
     
     BRA add_invalid       
 
 adda_source_data_byte
     MOVE.B  D1, D7  
-    MOVE.B  #SHARP, (A5)+   ;   
-    MOVE.B  #DOLLAR, (A5)+ ; 
-    MOVEA.W (A2)+, A6      ;   
-
+    MOVE.B  #SHARP, (A5)+       ; read more opcode word size      
+    MOVE.B  #DOLLAR, (A5)+      ; 
+    MOVEA.W (A2)+, A6           ;   
     * check if first 8 bits are 0s  
     MOVE.L  A6, D1      ;   
     LSR.W   #8, D1      ;   shift right 8   
     CMPI.B  #$00, D1    ;   if $00 is starting bits 
-    BEQ ADD_source_valid
+    BEQ ADDA_source_valid
     BRA ADD_invalid      
 
 ADDA_source_valid
-    MOVE.B  #byte, D1   ;   
-    MOVEM.L D5/A0, -(A7)  
-    BSR hex_to_string   ; 
-    MOVEM.L (A7)+, D5/A0   ; 
+    MOVE.W  #byte, D1           ;   
+    MOVEM.L D5/A0, -(A7)        ;
+    BSR hex_to_string           ;   
+    MOVEM.L (A7)+, D5/A0        ;
+ 
     MOVE.B  #COMMA, (A5)+   
     MOVE.B  #SPACE, (A5)+  
     MOVE.B  #A_, (A5)+  
     MOVE.B  D7, D0  
     BSR put_number     
     BRA add_adda_done      
-       
+
 addA_source_data_word  
     MOVE.B  #SHARP, (A5)+   ;   
     MOVE.B  #DOLLAR, (A5)+ ; 
@@ -3991,8 +4523,7 @@ ASLR_LSLR_ROLR
     MOVE.W  #14, D7 
     BSR get_bit 
     MOVE.W  D0, D6 * copy the value for the type into D6
-        
-    
+           
     MOVE.W  D5, D0
     LSL.W   #8, D0
     LSL.W   #5, D0   * keep the register value into D0    
@@ -4000,28 +4531,23 @@ ASLR_LSLR_ROLR
     LSR.W   #5, D0   
 
     CMPI.B  #3, D3    * check if it's memory shifting or not
-    BEQ memory_shift  
-       
+    BEQ memory_shift       
     CMPI.B  #0, D6    * AS register shift
-    BEQ as_shift
-    
+    BEQ as_shift  
     CMPI.B  #1, D6    * LS register shift
-    BEQ ls_shift  
-    
+    BEQ ls_shift    
     CMPI.B  #3, D6    * RO rigister shift
-    BEQ ro_shift 
-
+    BEQ ro_shift
     BRA invalid_code         
- 
-       
+     
 as_shift
     MOVE.B  #A_, (A5)+  
-    MOVE.B  #S_, (A5)+  
-    
+    MOVE.B  #S_, (A5)+     
     CMPI.B  #0, D2    
     BEQ as_ls_ro_right 
     CMPI.B  #1, D2    
     BEQ as_ls_ro_left
+    BRA as_ls_ro_invalid    
     
 as_ls_ro_right
     MOVE.B  #R_, (A5)+  
@@ -4067,12 +4593,13 @@ check_ir_bit
     CMPI.B  #1, D4    
     BEQ as_ls_ro_register   
 
-    BRA invalid_code
+    BRA as_ls_ro_invalid
             
     
 as_ls_ro_count     
-    MOVE.B  #SHARP, (A5)+   
-    MOVE.B  #DOLLAR, (A5)+  
+    MOVE.B  #SHARP, (A5)+
+    MOVE.B  #DOLLAR, (A5)+ 
+    BSR put_zero        
     MOVE.B  D0, D4  
     MOVE.W  D1, D0 
     CMPI.W  #0, D0  
@@ -4093,7 +4620,7 @@ as_ls_ro_eight
     MOVE.B  #SPACE, (A5)+   
     MOVE.B  #D_, (A5)+
     BSR put_number
-        BRA AS_LS_RO_done     
+    BRA AS_LS_RO_done     
 
 as_ls_ro_register
     MOVE.B  #D_, (A5)+  
@@ -4119,8 +4646,8 @@ ls_shift
     BRA as_ls_ro_invalid 
     
 ro_shift
-    MOVE.B  #A_, (A5)+  
-    MOVE.B  #S_, (A5)+  
+    MOVE.B  #R_, (A5)+  
+    MOVE.B  #O_, (A5)+  
     
     CMPI.B  #0, D2    
     BEQ as_ls_ro_right 
@@ -4139,7 +4666,7 @@ memory_shift
     
     CMPI.B  #1, D2    
     BEQ left_shift  
-    BRA invalid_code         
+    BRA as_ls_ro_invalid         
 
 right_shift
     * check the type among ASR.W, LSR.W, ROR.W
@@ -4239,7 +4766,6 @@ check_nextTwo
         BEQ indirect
     CMPI.B  #3, D6    
         BEQ indirect_postIncrement
-       
     BRA as_ls_ro_invalid         
 
 check_nextTwo2
@@ -4255,9 +4781,7 @@ indirect
     BSR put_number  
     MOVE.B  #Close_paren, (A5)+ 
     BRA AS_LS_RO_done
-
-
-    
+     
 indirect_postIncrement  
         MOVE.B  #Open_paren, (A5)+     
         MOVE.B  #A_, (A5)+   
@@ -4280,12 +4804,8 @@ absolute
     MOVE.B  #DOLLAR, (A5)+      
     CMPI.W #$0000, D0      
     BEQ AS_LS_RO_word_ea    
-    
     CMPI.W  #$0001, D0    
     BEQ AS_LS_RO_long_ea    
-    
-    MOVEM.L (A7)+, A5   
-
     BRA as_ls_ro_invalid  
     
 AS_LS_RO_word_ea
@@ -4416,7 +4936,8 @@ put_number_done
 * Decode functions end*********************************************************************************    
 * INSTRUCTION_NAME   
 RTS_    DC.B    'RTS'   ;    
-    
+NOP_     DC.B    'NOP'   ;  
+
 * CONSTANTS 
 
 CONTINUE_MSG    DC.B    'To continue, press ENTER: ', 0
@@ -4440,6 +4961,19 @@ RESULT_MSG  DC.B    ''  ;
 
 
     END    START        ; last line of source
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
